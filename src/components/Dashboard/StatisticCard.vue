@@ -1,0 +1,174 @@
+<template>
+  <div class="card">
+    <div class="card-header">
+      <button
+        @click="handleSwitchTab(tab.key)"
+        :class="`card-header-button text-base md:text-base xl:text-xl ${tab.key === currentTab ? 'card-header-button-active' : ''
+        }`"
+        v-for="tab in cardTabs"
+        :key="tab.key"
+      >
+        <span class="card-header-button-text">{{ tab.title }}</span>
+      </button>
+    </div>
+    <a-spin tip="Loading..." :spinning="fetching" delay="50">
+      <div
+        class="card-body flex justify-around items-start flex-col sm:flex-row md:flex-row p-1 sm:p-5 md:p-5"
+      >
+        <div class="card-info-item p-3 md:p-5">
+          <div class="card-info-icon px-5">
+            <img src="/diamond-box.png" class="h-14 w-14 sm:h-20 sm:w-20 md:h-20 md:w-20" />
+          </div>
+          <div>
+            <div class="card-info-title">Prize pool</div>
+            <div class="card-info-amount">{{ numberFmt(data?.max_jackpot) }}</div>
+            <div class="card-info-amount-convert">≈${{ numberFmt(data?.max_jackpot) }}</div>
+          </div>
+        </div>
+        <div class="card-info-item p-3 md:p-5">
+          <div class="card-info-icon px-5">
+            <img src="/bag1.png" class="h-14 w-14 sm:h-20 sm:w-20 md:h-20 md:w-20" />
+          </div>
+          <div>
+            <div class="card-info-title">Available Prize pool</div>
+            <div class="card-info-amount">{{ numberFmt(data?.sum_jackpot) }}</div>
+            <div class="card-info-amount-convert">≈${{ numberFmt(data?.sum_jackpot) }}</div>
+          </div>
+        </div>
+        <div class="card-info-item p-3 md:p-5">
+          <div class="card-info-icon px-5">
+            <img src="/bag2.png" class="h-14 w-14 sm:h-20 sm:w-20 md:h-20 md:w-20" />
+          </div>
+          <div>
+            <div class="card-info-title">Cumulative total</div>
+            <div class="card-info-amount">{{ numberFmt(data?.history_max_jackpot) }}</div>
+            <div class="card-info-amount-convert">≈${{ numberFmt(data?.history_max_jackpot) }}</div>
+          </div>
+        </div>
+      </div>
+    </a-spin>
+  </div>
+</template>
+
+<script>
+import { removeDecimal, formatNumber } from '@/utils/common'
+import { Dashboard } from '@/backends'
+
+
+export default {
+  data() {
+    return {
+      removeDecimal,
+      formatNumber,
+      cardTabs: [
+        {
+          title: '30 days',
+          key: 3
+        },
+        {
+          title: '7 days',
+          key: 2
+        },
+        {
+          title: 'Last 24h',
+          key: 1
+        }
+      ],
+      decimal: 6,
+      currentTab: 3,
+      fetching: true,
+      data: {},
+    }
+  },
+  created() {
+    this.fetchData()
+  },
+  methods: {
+    async fetchData() {
+      this.fetching = true
+      const { data } = await Dashboard.statistic({ type: this.currentTab })
+      this.data = data.data
+      this.fetching = false
+    },
+    numberFmt(digital) {
+      return digital ? formatNumber(removeDecimal(digital, this.decimal)) : 0
+    },
+    handleSwitchTab(key) {
+      this.currentTab = key
+      this.fetchData()
+    }
+  },
+}
+
+</script>
+
+<style scoped>
+.card {
+  background-color: rgba(255, 255, 255, 0.9);
+  min-height: 207px;
+}
+
+.card-header {
+  display: flex;
+  height: 50px;
+}
+
+.card-header-button-text {
+  font-size: 18px;
+}
+
+.card-header-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.2s ease;
+  width: 158px;
+  height: 100%;
+  border-radius: 16px 0 16px 0;
+  color: #666666;
+}
+
+.card-header-button-active {
+  width: 169px;
+  background-color: #ffffff00;
+  background-image: linear-gradient(
+    120deg,
+    #ffffff1a 13%,
+    #eaeafde6 52%,
+    #abc9fe99 100%
+  );
+  color: #00367f;
+}
+
+.card-body {
+}
+
+.card,
+.card-header,
+.card-body {
+  border-radius: 16px;
+}
+
+.card-info-item {
+  display: flex;
+  align-items: center;
+}
+
+.card-info-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #666666;
+}
+
+.card-info-amount {
+  font-size: 20px;
+  font-weight: 500;
+  color: #00367f;
+}
+
+.card-info-amount-convert {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666666;
+}
+</style>
