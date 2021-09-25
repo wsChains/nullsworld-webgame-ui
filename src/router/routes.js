@@ -54,7 +54,7 @@ export const routes = [
   },
   {
     name: 'MarketNullsInfo',
-    path: '/market/sold/:sellId',
+    path: '/market/commodities/:sellId',
     component: MarketNullsInfo,
     // component: () => import('@/views/Market/MarketNullsInfo.vue'),
     meta: { title: 'MarketNullsInfo' },
@@ -92,7 +92,7 @@ export const routes = [
   // Common Components ----------------------------
   {
     name: 'NullsDetails',
-    path: '/nulls-details/:nullsId?',
+    path: '/nulls/details/:nullsId?',
     component: NullsDetails,
     // component: () => import('@/views/Common/NullsDetails.vue'),
     meta: {
