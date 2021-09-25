@@ -24,7 +24,7 @@
           <div
             class="info-item justify-between items-center"
             v-for="record in ringRecords"
-            :key="record"
+            :key="`${record.id}-ring-record`"
           >
             <div class="flex items-center">
               <a-image class="ring-image" :src="`/gamebg${calcArenaImage(record.item_id)}.jpg`" />
@@ -138,6 +138,7 @@ export default {
       page: 1,
       recordsTotal: 0,
       fetching: true,
+      updateInterval: -1
     }
   },
   props: {
@@ -154,8 +155,14 @@ export default {
       default: false
     }
   },
+  unmounted() {
+    clearInterval(this.updateInterval)
+  },
   async created() {
-    this.fetchRingRecord()
+    await this.fetchRingRecord()
+    this.updateInterval = setInterval(() => {
+      this.fetchRingRecord(true)
+    }, 10000)
   },
   computed: {
     infoTextWidth() {
@@ -166,8 +173,8 @@ export default {
     ethAddress(address) {
       return this.displayFullAddress ? address : cutEthAddress(address, 4)
     },
-    async fetchRingRecord() {
-      this.fetching = true
+    async fetchRingRecord(autoUpdate = false) {
+      if (!autoUpdate) this.fetching = true
       const { data } = await Dashboard.ringRecord({
         current: this.page,
         pageSize: this.pageSize

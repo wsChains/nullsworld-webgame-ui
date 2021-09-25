@@ -22,7 +22,7 @@
           <div
             class="info-item justify-between items-center"
             v-for="record in tradeRecords"
-            :key="record"
+            :key="`${record.id}-trade-record`"
           >
             <div class="flex items-center">
               <a-image class="ring-image" :src="`/nulls${calcNullsImage(record.pet_id)}.png`" />
@@ -105,7 +105,7 @@
           </div>
           <div v-if="pagination" class="pagination-bar">
             <a-pagination
-              @change="fetchRingRecord"
+              @change="fetchTradingRecord"
               show-quick-jumper
               v-model:current="page"
               :total="recordsTotal"
@@ -135,7 +135,8 @@ export default {
       tradeRecords: [],
       page: 1,
       recordsTotal: 0,
-      fetching: true
+      fetching: true,
+      updateInterval: -1
     }
   },
   props: {
@@ -152,8 +153,14 @@ export default {
       default: false
     }
   },
+  unmounted() {
+    clearInterval(this.updateInterval)
+  },
   async created() {
-    this.fetchRingRecord()
+    await this.fetchTradingRecord()
+    this.updateInterval = setInterval(() => {
+      this.fetchTradingRecord(true)
+    }, 10000)
   },
   computed: {
     infoTextWidth() {
@@ -164,8 +171,8 @@ export default {
     ethAddress(address) {
       return this.displayFullAddress ? address : cutEthAddress(address, 4)
     },
-    async fetchRingRecord() {
-      this.fetching = true
+    async fetchTradingRecord(autoUpdate = false) {
+      if (!autoUpdate) this.fetching = true
       const { data } = await Trading.transactionRecord({
         current: this.page,
         pageSize: this.pageSize

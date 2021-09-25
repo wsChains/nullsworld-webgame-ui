@@ -102,7 +102,7 @@ export default {
       await this.fetchData()
       this.updateInterval = setInterval(() => {
         this.fetchData(true)
-      }, 5000)
+      }, 10000)
     },
     async fetchData(autoUpdate = false) {
       if (!autoUpdate) this.fetching = true
