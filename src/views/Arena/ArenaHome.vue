@@ -126,6 +126,7 @@ export default {
       searchInput: undefined,
       fetching: true,
       selectedFilter: 1,
+      updateInterval: -1,
       filters: [
         {
           text: 'Challengable',
@@ -161,6 +162,9 @@ export default {
   },
   async created() {
     this.fetchRingList()
+    this.updateInterval = setInterval(() => {
+      this.fetchRingList(true)
+    }, 5000)
   },
   watch: {
     selectedFilter() {
@@ -173,8 +177,8 @@ export default {
     }
   },
   methods: {
-    async fetchRingList() {
-      this.fetching = true
+    async fetchRingList(autoUpdate = false) {
+      if (!autoUpdate) this.fetching = true
       const { data } = await Ring.findPage({
         status: this.selectedFilter,
         sort: this.selectedFiltersL2,
@@ -215,7 +219,7 @@ export default {
         }
       }
     }
-  },/* <span class="onsale-section"><span class="onsale">Save 10%</span></span> */
+  },
   computed: {
     selectedFilterText2() {
       return this.filtersL2?.filter && this.filtersL2.filter((f) => f.key === this.selectedFiltersL2)[0]?.text
