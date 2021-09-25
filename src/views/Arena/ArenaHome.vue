@@ -77,7 +77,7 @@
             <empty v-show="arenaList?.length < 1" />
             <ArenaItem
               v-for="a in arenaList"
-              :key="a"
+              :key="`${a.item_id}-arena-item`"
               :data="a"
               @onWin="onWin"
               :hideInCombat="hideInCombat"
@@ -159,6 +159,9 @@ export default {
 
       arenaList: [],
     }
+  },
+  unmounted() {
+    clearInterval(this.updateInterval)
   },
   async created() {
     this.fetchRingList()
