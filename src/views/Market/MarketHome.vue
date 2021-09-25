@@ -5,7 +5,7 @@
       <div class="item-list-card mt-6">
         <div class="item-list-card-body">
           <div class="filter-bar px-12 py-10">
-            <div class="arena-count">
+            <div class="market-count">
               Total
               <span class="font-bold">{{ total }}</span> Commodities
             </div>
@@ -28,38 +28,12 @@
           <a-spin tip="Loading..." :spinning="fetching" delay="50">
             <div class="deal-content">
               <empty v-show="trades?.length < 1" />
-              <div
-                :class="[item.type === 255 ? 'guardians-border' : '', 'item-frame']"
-                v-for="item in trades"
-                :key="item"
-              >
-                <div>
-                  <span :class="`nulls-id  ${calcColor(item.pet_id)}`">#{{ item.pet_id }}</span>
-                </div>
-                <div class="text-lg size-title">{{ item.name }}</div>
-                <div class="item-content-img">
-                  <img :src="`/nulls${calcNullsImage(item.pet_id)}.png`" />
-                </div>
-                <div class="item-price">
-                  <div
-                    :class="[item.type === 255 ? 'guardians' : '', 'nulls-name']"
-                  >{{ item.type === 255 ? 'Guardians' : 'Nulls' }}</div>
-                  <div class="flex flex-col items-center mt-2">
-                    <div
-                      class="price-currency"
-                      style="padding-right: 10px"
-                    >{{ formatNumber(removeDecimal(item.price, 6)) }} {{ item.current }}</div>
-                    <div class="price-us">≈${{ formatNumber(removeDecimal(item.price, 6)) }}</div>
-                  </div>
-                </div>
-                <div class="item-bottom-arrange">
-                  <color-button
-                    buttonStyle="blue"
-                    @click="$router.push({ name: 'MarketNullsInfo', params: { sellId: item.id } })"
-                  >Detail</color-button>
-                  <color-button buttonStyle="orange" @click="handleBuy(item)">Buy</color-button>
-                </div>
-              </div>
+              <CommodityItem
+                v-for="(tradeData, idx) in trades"
+                :key="tradeData.id"
+                :data="tradeData"
+                @onItemPurchased="onItemPurchased(idx)"
+              />
             </div>
           </a-spin>
 
@@ -80,25 +54,18 @@
 
 <script>
 import Notice from '@/components/Common/NoticeBar.vue'
-
 import { Trading } from '@/backends'
-import { removeDecimal, calcNullsImage, calcColor, addDecimal, formatNumber } from '@/utils/common'
-import { NullsWorldMarket } from '@/contracts'
-import { BigNumber } from 'ethers'
 import empty from '@/components/Common/EmptyStatus.vue'
-import { h } from 'vue'
-import { CheckCircleTwoTone } from '@ant-design/icons-vue'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import CommodityItem from '@/components/Items/CommodityItem.vue'
 
 
 export default {
   components: {
-    Notice, empty, CheckCircleTwoTone
+    Notice, empty, CommodityItem
   },
   data() {
     return {
-      removeDecimal, calcNullsImage, calcColor, addDecimal,
-      formatNumber,
+      updateInterval: -1,
       marketContract: undefined,
       approving: false,
       purchasing: false,
@@ -121,26 +88,25 @@ export default {
       ],
       total: 1,
       page: 1,
-      trades: [],
-      tokenContracts: {}
+      trades: []
     }
+  },
+  unmounted() {
+    clearInterval(this.updateInterval)
   },
   async created() {
     this.fetchTradList()
-
-    // Create contracts
-    this.marketContract = this.wallet.createContract(NullsWorldMarket)
-
+    this.updateInterval = setInterval(() => {
+      this.fetchTradList(true)
+    }, 10000)
   },
   methods: {
-    getTokenContracts(address) {
-      if (this.tokenContracts[address]) return this.tokenContracts[address]
-      const c = this.wallet.createERC20(address)
-      this.tokenContracts[address] = c
-      return c
+    async onItemPurchased(idx) {
+      /* this.trades.splice(idx, 1) */
+      await this.fetchTradList()
     },
-    async fetchTradList() {
-      this.fetching = true
+    async fetchTradList(autoUpdate = false) {
+      if (!autoUpdate) this.fetching = true
       const { data } = await Trading.marketPage({
         current: this.current,
         pageSize: this.pageSize,
@@ -151,11 +117,7 @@ export default {
       if (data.code != 200) return this.$message.error(data.message)
 
       this.total = data.data?.count
-      this.trades = data.data?.row
-    },
-    randColor() {
-      const items = ['rare-blue', 'rare-purple', 'rare-red', 'rare-orange']
-      return items[Math.floor(Math.random() * items.length)]
+      this.trades = data.data?.row?.sort((a, b) => b.id - a.id)
     },
     isActiveFilter(filter) {
       return this.selectedFilter === filter.value
@@ -163,70 +125,6 @@ export default {
     selectFilter(filter) {
       this.selectedFilter = filter.value
       this.fetchTradList()
-    },
-    async handleBuy(item) {
-      if (!item) return
-      if (this.approving) return
-
-      // Init contract
-      const tokenContract = this.getTokenContracts(item.current_contract)
-
-      // Check allowance
-      const ALLOWANCE = BigNumber.from(1_000_000_000)
-      const allowance = await tokenContract['allowance'](this.wallet.address, NullsWorldMarket.address)
-
-      // Approve if need
-      if (allowance < ALLOWANCE) {
-        this.approving = true
-        let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
-        const approveAmount = addDecimal(ALLOWANCE, item.current_precision || this.usdtDecimals).toString()
-        try {
-          const approveTx = await tokenContract['approve'](NullsWorldMarket.address, approveAmount)
-          hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
-          await approveTx.wait().then(receipt => {
-            console.log(receipt)
-            if (receipt.status === 1) {
-              console.log(`================approveTx=================`)
-              this.$message.success('Successful approve!')
-              hiedeApprovingHint()
-              this.approving = false
-            }
-          })
-        } catch (err) {
-          hiedeApprovingHint()
-          console.error(err)
-          this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
-          this.approving = false
-          return
-        }
-      }
-
-      // Purchase eggs
-      let hidePurchasingHint = this.$message.loading({ content: 'Awaiting approval of transaction', key: 'purchasing', duration: 0 })
-      this.purchasing = true
-      try {
-        const purchaseTx = await this.marketContract['buyPet'](item.pet_id)
-        hidePurchasingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'purchasing', duration: 0 })
-        await purchaseTx.wait().then(receipt => {
-          console.log(receipt)
-          if (receipt.status === 1) {
-            console.log(`===============purchaseTx==================`)
-            this.purchasing = false
-            hidePurchasingHint()
-            this.$notification.open({
-              message: 'Successful purchase',
-              description: `Successfully purchased Nulls #${item.pet_id}`,
-              icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' }),
-            })
-            this.fetchTradList()
-          }
-        })
-      } catch (err) {
-        hidePurchasingHint()
-        console.error(err)
-        this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
-        this.purchasing = false
-      }
     }
   }
 
@@ -237,6 +135,12 @@ export default {
 .item-list-card {
   height: 100%;
   width: 100%;
+}
+
+.deal-content {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 10px;
 }
 
 .item-list-card-body {
@@ -251,103 +155,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  color: #111111;
-  user-select: none;
-  cursor: pointer;
-  transition: 0.2s ease;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.filter-item:hover {
-  color: #00367f;
-  font-weight: bold;
-  background-color: #aeceff4d;
-}
-
-.filter-item-active {
-  color: #00367f;
-  font-weight: bold;
-  background-color: #aeceff4d;
-}
-
-.deal-content {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0 10px;
-}
-
-.item-content-img {
-  display: flex;
-  justify-content: center;
-  height: 133px;
-  margin: 15px 0;
-  transition: 0.2s ease;
-}
-
-.size-title {
-  margin-top: 8px;
-  padding: 0 4px;
-  color: #111111;
-}
-
-.item-price {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-top: 10px;
-}
-
-.price-currency {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ff7427;
-}
-
-.price-us {
-  font-weight: 400;
-  font-size: 12px;
-  color: #666666;
-}
-
-.item-bottom-arrange {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 20px;
-}
-
-.item-frame {
-  width: 295px;
-  height: 376px;
-  border-radius: 10px;
-  background-color: #fff4c333;
-  border: 2px solid #ff742733;
-  user-select: none;
-  cursor: pointer;
-  transition: 0.2s ease;
-  position: relative;
-  margin: 0 10px 30px 10px;
-  padding: 30px;
-}
-
-.item-frame:hover {
-  background-color: #fff4c34d;
-}
-
-.item-frame:active {
-  filter: brightness(0.9);
-  /* transform: scale(0.9); */
-}
-
-.item-frame:last-child:nth-child(4n - 1) {
-  margin-right: calc(295 + 4rem);
 }
 
 .filter-item {
@@ -379,52 +186,7 @@ export default {
   background-color: #aeceff4d;
 }
 
-.guardians {
-  background-image: -webkit-linear-gradient(
-    left,
-    #ff2e2e,
-    #e6d205 25%,
-    #003cff 50%,
-    #e6d205 75%,
-    #ff5252
-  );
-  -webkit-text-fill-color: transparent;
-
-  -webkit-background-clip: text;
-  -webkit-background-size: 200% 100%;
-  -webkit-animation: maskedAnimation 4s infinite linear;
-
-  background-clip: text;
-  background-size: 200% 100%;
-  animation: maskedAnimation 4s infinite linear;
-}
-
-@keyframes maskedAnimation {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
-}
-
-.nulls-name {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.guardians-border {
-  border: 3px solid #ff8585;
-}
-
-.nulls-id {
-  border-radius: 12px;
-  padding: 4px 8px;
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.arena-count {
+.market-count {
   font-size: 18px;
   margin-right: 24px;
   background-color: #aeceff4d;

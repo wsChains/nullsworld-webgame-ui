@@ -437,25 +437,6 @@ export default {
   text-align: center;
 }
 
-@keyframes shake {
-  10% {
-    transform: scale(1.1) rotate(15deg);
-  }
-  20% {
-    transform: scale(1.1) rotate(-10deg);
-  }
-  30% {
-    transform: scale(1.1) rotate(5deg);
-  }
-  40% {
-    transform: scale(1.1) rotate(-5deg);
-  }
-  50%,
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
 .color-button {
   height: 46px;
   font-size: 18px;

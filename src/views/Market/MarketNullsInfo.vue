@@ -9,29 +9,31 @@
         <div class="content-layout">
           <div class="layout">
             <div>
-              <NullsPreview :nullsId="pet?.pet_id" :nullsType="pet?.type" />
+              <NullsPreview :nullsId="pet?.pet_id || petId" :nullsType="pet?.type || petType" />
             </div>
             <div class="layout-right">
               <div class="synopsis-layout">
                 <div class="synopsis-title">Nulls's Stories</div>
-                <div class="synopsis-content">This nulls has no story yet...</div>
-                <div
-                  class="price"
-                >{{ formatNumber(removeDecimal(pet?.price, pet?.current_precision || 6)) }} {{ pet?.current }}</div>
-                <div class="synopsis-buy">
-                  <color-button
-                    v-if="pet?.sell_account?.toLowerCase() !== wallet.address?.toLowerCase()"
-                    @click="handleBuy"
-                    buttonStyle="orange"
-                    :disabled="approving || purchasing"
-                  >Buy</color-button>
-                  <color-button
-                    v-else="pet?.sell_account?.toLowerCase() === wallet.address?.toLowerCase()"
-                    @click="handleCancelSale"
-                    buttonStyle="yellow"
-                    :disabled="canceling"
-                  >{{ canceling ? 'Canceling...' : 'Cancel Sale' }}</color-button>
-                </div>
+                <a-spin :spinning="fetching">
+                  <div class="synopsis-content">This nulls has no story yet...</div>
+                  <div
+                    class="price"
+                  >{{ formatNumber(removeDecimal(pet?.price || petPrice, pet?.current_precision || 6)) }} {{ pet?.current || petCurrent }}</div>
+                  <div class="synopsis-buy">
+                    <color-button
+                      v-if="pet?.sell_account?.toLowerCase() !== wallet.address?.toLowerCase()"
+                      @click="showBuyModal = true"
+                      buttonStyle="orange"
+                      :disabled="approving || purchasing"
+                    >Buy</color-button>
+                    <color-button
+                      v-else="wallet.connected && (pet?.sell_account?.toLowerCase() === wallet.address?.toLowerCase())"
+                      @click="handleCancelSale"
+                      buttonStyle="yellow"
+                      :disabled="canceling"
+                    >{{ canceling ? 'Canceling...' : 'Cancel Sale' }}</color-button>
+                  </div>
+                </a-spin>
               </div>
 
               <!-- <div class="record-list">
@@ -140,19 +142,31 @@
       </div>
     </div>
   </div>
+  <custom-modal v-model="showBuyModal" :click-to-close="true">
+    <MarketBuy
+      v-if="renderMarketBuy"
+      :key="`${data?.id}-market-buy`"
+      :item="pet"
+      @onPurchaseStart="onPurchaseStart"
+      @onPurchaseDone="onPurchaseDone"
+    />
+  </custom-modal>
 </template>
 
 
 <script>
+import CustomModal from '@/components/Common/CustomModal.vue'
+import MarketBuy from '@/components/ModalContents/MarketBuy.vue'
+
 import { calcColor, calcNullsImage, removeDecimal, formatDate, txExplorer, accountExplorer, cutEthAddress, formatNumber } from '@/utils/common'
 import { Trading } from '@/backends'
 import empty from '@/components/Common/EmptyStatus.vue'
 import NullsPreview from '@/components/Items/NullsPreview.vue'
 import { h } from 'vue'
 import { CheckCircleTwoTone } from '@ant-design/icons-vue'
+import { WALLET_ERRORS } from '@/utils/wallet'
 import { NullsWorldMarket } from '@/contracts'
-import { BigNumber } from 'ethers'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+
 
 
 const recordAddrs = (record) => {
@@ -162,38 +176,56 @@ const recordAddrs = (record) => {
   }
 }
 
-
-
-
 export default {
   components: {
-    empty, NullsPreview, CheckCircleTwoTone
+    empty, NullsPreview, CheckCircleTwoTone, CustomModal, MarketBuy
   },
   props: {
     sellId: {
       default: 1
+    },
+    petId: {
+      default: 1
+    },
+    petType: {
+      default: 1
+    },
+    petPrice: {
+      default: 0
+    },
+    petCurrent: {
+      default: '...'
     }
   },
   data() {
     return {
       calcColor, calcNullsImage, removeDecimal, formatDate, txExplorer, accountExplorer, cutEthAddress, formatNumber,
+      showBuyModal: false,
+      renderMarketBuy: false,
       fetching: false,
       approving: false,
       purchasing: false,
       pet: {},
       sellRecord: [],
       ringRecord: [],
-      tokenContract: undefined,
-      marketContract: undefined,
       canceling: false
     }
   },
   async created() {
     this.fetchData()
-
-    // Create contracts
-    this.marketContract = this.wallet.createContract(NullsWorldMarket)
-
+    this.initContract()
+  },
+  watch: {
+    showBuyModal(newVal, oldVal) {
+      if (newVal === oldVal) return
+      else if (newVal === false) return this.renderChangeTimeout = setTimeout(() => {
+        this.renderMarketBuy = false
+      }, 500)
+      else if (newVal === true) {
+        clearTimeout(this.renderChangeTimeout)
+        return this.renderMarketBuy = true
+      }
+    }
   },
   computed: {
     isGuardians() {
@@ -201,6 +233,11 @@ export default {
     }
   },
   methods: {
+    initContract() {
+      if (!this.wallet.connected) return
+      // Create contracts
+      this.marketContract = this.wallet.createContract(NullsWorldMarket)
+    },
     async fetchData() {
       this.fetching = true
       const { data } = await Trading.petDetail({ id: this.sellId })
@@ -235,22 +272,6 @@ export default {
       if (cAddr === this.wallet.address) return imWin ? record.value : record.tickets
       return record.value
     },
-    handleGoCombat() {
-      this.$router.push({ name: 'Arena' })
-    },
-    handleCreateArena() {
-      if (this.pet?.type === 255) {
-        this.paramStore.arenaNullsId = this.pet?.pet_id
-        this.paramStore.arenaNullsType = this.pet?.type
-        this.$root.openGlobalModal('createArena')
-        return
-      }
-    },
-    handleSold() {
-      this.paramStore.soldNullsId = this.pet?.pet_id
-      this.paramStore.soldNullsType = this.pet?.type
-      this.$root.openGlobalModal('soldOnMarket')
-    },
     async handleCancelSale() {
       this.canceling = true
       let hideUnSell = this.$message.loading({ content: 'Cancel selling...', key: 'cancel_cell', duration: 0 })
@@ -274,70 +295,6 @@ export default {
         console.error(err)
         this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
         this.canceling = false
-      }
-    },
-    async handleBuy() {
-      const item = this.pet
-      if (!item) return
-      if (this.approving) return
-      // Init contract
-      const tokenContract = this.wallet.createERC20(item.current_contract)
-      // Check allowance
-      const ALLOWANCE = BigNumber.from(1_000_000_000)
-      const allowance = await tokenContract['allowance'](this.wallet.address, NullsWorldMarket.address)
-
-
-      // Approve if need
-      if (allowance < ALLOWANCE) {
-        this.approving = true
-        let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
-        const approveAmount = addDecimal(ALLOWANCE, item.current_precision || 6).toString()
-        try {
-          const approveTx = await tokenContract['approve'](NullsWorldMarket.address, approveAmount)
-          hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
-          await approveTx.wait().then(receipt => {
-            console.log(receipt)
-            if (receipt.status === 1) {
-              console.log(`================approveTx=================`)
-              this.$message.success('Successful approve!')
-              hiedeApprovingHint()
-              this.approving = false
-            }
-          })
-        } catch (err) {
-          hiedeApprovingHint()
-          console.error(err)
-          this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
-          this.approving = false
-          return
-        }
-      }
-
-      // Purchase eggs
-      let hidePurchasingHint = this.$message.loading({ content: 'Awaiting approval of transaction', key: 'purchasing', duration: 0 })
-      this.purchasing = true
-      try {
-        const purchaseTx = await this.marketContract['buyPet'](item.pet_id)
-        hidePurchasingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'purchasing', duration: 0 })
-        await purchaseTx.wait().then(receipt => {
-          console.log(receipt)
-          if (receipt.status === 1) {
-            console.log(`===============purchaseTx==================`)
-            this.purchasing = false
-            hidePurchasingHint()
-            this.$notification.open({
-              message: 'Successful purchase',
-              description: `Successfully purchased Nulls #${item.pet_id}`,
-              icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' }),
-            })
-            this.$router.back(-1)
-          }
-        })
-      } catch (err) {
-        hidePurchasingHint()
-        console.error(err)
-        this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
-        this.purchasing = false
       }
     },
     openLink(tx) {
@@ -585,7 +542,7 @@ export default {
 .price {
   color: #ff7c43;
   font-weight: bold;
-  font-size: 28px;
+  font-size: 24px;
   text-align: center;
   padding: 20px 0;
 }

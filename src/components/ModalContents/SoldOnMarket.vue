@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <div class="flex items-center">
-      <NullsPreview :nullsId="paramStore.soldNullsId" :nullsType="paramStore.soldNullsType" />
+      <NullsPreview :nullsId="item.pet_id" :nullsType="item.type" />
     </div>
     <a-spin tip="Loading..." :spinning="approving || selling">
       <div class="arena-container">
@@ -70,10 +70,7 @@
             <div>Nulls ID</div>
             <div class="px-4 font-bold">
               <span v-if="invalidNulls" class="px-2">No Nulls</span>
-              <span
-                v-else
-                :class="[calcColor(paramStore.soldNullsId), 'nulls-id']"
-              >#{{ paramStore.soldNullsId }}</span>
+              <span v-else :class="[calcColor(item.pet_id), 'nulls-id']">#{{ item.pet_id }}</span>
             </div>
           </div>
           <div class="form-column">
@@ -121,6 +118,11 @@ export default {
   components: {
     NullsPreview, LoadingOutlined
   },
+  props: {
+    item: {
+      default: undefined
+    }
+  },
   data() {
     return {
       addDecimal, formatNumber, removeDecimal, calcColor,
@@ -166,7 +168,7 @@ export default {
   },
   computed: {
     invalidNulls() {
-      return this.paramStore.soldNullsId < 0
+      return this.item.pet_id < 0
     },
     insufficientBalance() {
       return !this.tokenBalance || (this.price > this.tokenBalance)
@@ -217,9 +219,9 @@ export default {
       })
     },
     async handleSell() {
-      if (!this.paramStore.soldNullsId) return
+      if (!this.item.pet_id) return
 
-      const nullsId = this.paramStore.soldNullsId
+      const nullsId = this.item.pet_id
 
       // Check approved
       const approvedAddress = (await this.petContract['getApproved'](nullsId)).toLowerCase()
