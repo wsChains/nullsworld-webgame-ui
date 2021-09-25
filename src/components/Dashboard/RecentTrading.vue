@@ -85,7 +85,7 @@
                     :href="accountExplorer(record.current_contract)"
                     target="_blank"
                     style="font-weight: bold; color: #01ba96;"
-                  >{{ removeDecimal(record.price, record.current_precision) }} {{ record.current }}</a>
+                  >{{ formatNumber(removeDecimal(record.price, record.current_precision)) }} {{ record.current }}</a>
                 </div>
               </a-tooltip>
             </div>
@@ -121,7 +121,7 @@
 
 <script>
 import { Trading } from '@/backends'
-import { formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcColor, calcNullsImage } from '@/utils/common'
+import { formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcColor, calcNullsImage, formatNumber } from '@/utils/common'
 
 import empty from '@/components/Common/EmptyStatus.vue'
 
@@ -131,7 +131,7 @@ export default {
   },
   data() {
     return {
-      formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcColor, calcNullsImage,
+      formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcColor, calcNullsImage, formatNumber,
       tradeRecords: [],
       page: 1,
       recordsTotal: 0,

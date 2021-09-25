@@ -87,7 +87,7 @@
                     :href="accountExplorer(record.token)"
                     target="_blank"
                     style="font-weight: bold;"
-                  >{{ record.isWin == 0 ? '-' : '+' }}{{ removeDecimal(record.value, record.token_precision) }} {{ record.token_name }}</a>
+                  >{{ record.isWin == 0 ? '-' : '+' }}{{ formatNumber(removeDecimal(record.value, record.token_precision)) }} {{ record.token_name }}</a>
                 </div>
               </a-tooltip>
             </div>
@@ -123,7 +123,7 @@
 
 <script>
 import { Dashboard } from '@/backends'
-import { formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcArenaImage, calcColor } from '@/utils/common'
+import { formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcArenaImage, calcColor, formatNumber } from '@/utils/common'
 
 import empty from '@/components/Common/EmptyStatus.vue'
 
@@ -133,7 +133,7 @@ export default {
   },
   data() {
     return {
-      formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcArenaImage, calcColor,
+      formatDate, cutEthAddress, removeDecimal, txExplorer, accountExplorer, calcArenaImage, calcColor, formatNumber,
       ringRecords: [],
       page: 1,
       recordsTotal: 0,
