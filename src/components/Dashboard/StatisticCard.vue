@@ -20,8 +20,11 @@
             <img src="/diamond-box.png" class="h-14 w-14 sm:h-20 sm:w-20 md:h-20 md:w-20" />
           </div>
           <div>
-            <div class="card-info-title">Prize pool</div>
-            <div class="card-info-amount">{{ numberFmt(data?.max_jackpot) }}</div>
+            <div class="card-info-title">Top Prize pool</div>
+            <div class="card-info-amount">
+              {{ numberFmt(data?.max_jackpot) }}
+              <span>USDT</span>
+            </div>
             <div class="card-info-amount-convert">≈${{ numberFmt(data?.max_jackpot) }}</div>
           </div>
         </div>
@@ -31,7 +34,10 @@
           </div>
           <div>
             <div class="card-info-title">Available Prize pool</div>
-            <div class="card-info-amount">{{ numberFmt(data?.sum_jackpot) }}</div>
+            <div class="card-info-amount">
+              {{ numberFmt(data?.sum_jackpot) }}
+              <span>USDT</span>
+            </div>
             <div class="card-info-amount-convert">≈${{ numberFmt(data?.sum_jackpot) }}</div>
           </div>
         </div>
@@ -41,7 +47,10 @@
           </div>
           <div>
             <div class="card-info-title">Cumulative total</div>
-            <div class="card-info-amount">{{ numberFmt(data?.history_max_jackpot) }}</div>
+            <div class="card-info-amount">
+              {{ numberFmt(data?.history_max_jackpot) }}
+              <span>USDT</span>
+            </div>
             <div class="card-info-amount-convert">≈${{ numberFmt(data?.history_max_jackpot) }}</div>
           </div>
         </div>
@@ -78,14 +87,25 @@ export default {
       currentTab: 3,
       fetching: true,
       data: {},
+      updateInterval: -1
     }
   },
-  created() {
-    this.fetchData()
+  async created() {
+    await this.init()
+  },
+  unmounted() {
+    clearInterval(this.updateInterval)
   },
   methods: {
-    async fetchData() {
-      this.fetching = true
+    async init() {
+      clearInterval(this.updateInterval)
+      await this.fetchData()
+      this.updateInterval = setInterval(() => {
+        this.fetchData(true)
+      }, 5000)
+    },
+    async fetchData(autoUpdate = false) {
+      if (!autoUpdate) this.fetching = true
       const { data } = await Dashboard.statistic({ type: this.currentTab })
       this.data = data.data
       this.fetching = false
@@ -164,6 +184,10 @@ export default {
   font-size: 20px;
   font-weight: 500;
   color: #00367f;
+}
+
+.card-info-amount span {
+  font-size: 16px;
 }
 
 .card-info-amount-convert {
