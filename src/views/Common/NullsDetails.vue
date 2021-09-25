@@ -28,7 +28,7 @@
                     @click="handleCreateArena"
                     buttonStyle="orange"
                   >Create Arena</color-button>
-                  <color-button @click="handleSold" buttonStyle="blue">Sold on the market</color-button>
+                  <color-button @click="showSoldModal = true" buttonStyle="blue">Sold on the market</color-button>
                 </div>
               </div>
 
@@ -138,10 +138,16 @@
       </div>
     </div>
   </div>
+  <custom-modal v-model="showSoldModal" :click-to-close="true">
+    <SoldOnMarket v-if="renderNullsSold" :key="`${nullsId}-nulls-sold`" :item="pet" />
+  </custom-modal>
 </template>
 
 
 <script>
+import CustomModal from '@/components/Common/CustomModal.vue'
+import SoldOnMarket from '@/components/ModalContents/SoldOnMarket.vue'
+
 import { calcColor, calcNullsImage, removeDecimal, formatDate, txExplorer, cutEthAddress, accountExplorer } from '@/utils/common'
 import { MyNulls } from '@/backends'
 import empty from '@/components/Common/EmptyStatus.vue'
@@ -156,7 +162,7 @@ const recordAddrs = (record) => {
 
 export default {
   components: {
-    empty, NullsPreview
+    empty, NullsPreview, SoldOnMarket, CustomModal
   },
   props: {
     nullsId: {
@@ -167,9 +173,24 @@ export default {
     return {
       calcColor, calcNullsImage, removeDecimal, formatDate, txExplorer, cutEthAddress, accountExplorer,
       fetching: false,
+      showSoldModal: false,
+      renderNullsSold: false,
       pet: {},
       sellRecord: [],
-      ringRecord: []
+      ringRecord: [],
+      renderChangeTimeout: -1
+    }
+  },
+  watch: {
+    showSoldModal(newVal, oldVal) {
+      if (newVal === oldVal) return
+      else if (newVal === false) return this.renderChangeTimeout = setTimeout(() => {
+        this.renderNullsSold = false
+      }, 500)
+      else if (newVal === true) {
+        clearTimeout(this.renderChangeTimeout)
+        return this.renderNullsSold = true
+      }
     }
   },
   created() {
@@ -226,11 +247,6 @@ export default {
         this.$root.openGlobalModal('createArena')
         return
       }
-    },
-    handleSold() {
-      this.paramStore.soldNullsId = this.pet.pet_id
-      this.paramStore.soldNullsType = this.pet.type
-      this.$root.openGlobalModal('soldOnMarket')
     },
     openLink(tx) {
       window.open(txExplorer(tx.tx_hash), "_blank")

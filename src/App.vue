@@ -12,7 +12,6 @@
       v-else-if="contentSwitcher('selectNullsArena')"
     />
     <!-- <SelectNullsCombat v-else-if="contentSwitcher('selectNullsCombat')" /> -->
-    <SoldOnMarket key="GlobalModal-SoldOnMarket" v-else-if="contentSwitcher('soldOnMarket')" />
   </custom-modal>
   <custom-modal v-model="showWalletConnect">
     <WalletConnect />
@@ -42,7 +41,6 @@ import OpenEggs from '@/components/ModalContents/OpenEggs.vue'
 import CreateArena from '@/components/ModalContents/CreateArena.vue'
 import SelectNullsArena from '@/components/ModalContents/SelectNullsArena.vue'
 import SelectNullsCombat from '@/components/ModalContents/SelectNullsCombat.vue'
-import SoldOnMarket from '@/components/ModalContents/SoldOnMarket.vue'
 
 
 
@@ -59,8 +57,7 @@ export default {
     CreateArena,
     SelectNullsArena,
     SelectNullsCombat,
-    BackTop,
-    SoldOnMarket
+    BackTop
   },
   data() {
     return {
