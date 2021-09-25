@@ -24,14 +24,14 @@ export const routes = [
   },
   {
     name: 'RecentTrading',
-    path: '/recent-trading',
+    path: '/recent/trading',
     component: RecentTrading,
     // component: () => import('@/views/Dashboard/RecentTrading.vue'),
     meta: { title: 'RecentTrading' }
   },
   {
     name: 'RecentCombat',
-    path: '/recent-combat',
+    path: '/recent/combat',
     component: RecentCombat,
     // component: () => import('@/views/Dashboard/RecentCombat.vue'),
     meta: { title: 'RecentCombat' }
