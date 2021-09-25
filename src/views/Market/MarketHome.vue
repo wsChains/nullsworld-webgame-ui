@@ -5,6 +5,10 @@
       <div class="item-list-card mt-6">
         <div class="item-list-card-body">
           <div class="filter-bar px-12 py-10">
+            <div class="arena-count">
+              Total
+              <span class="font-bold">{{ total }}</span> Commodities
+            </div>
             <div class="flex items-center">
               <div
                 @click="selectFilter(filter)"
@@ -418,5 +422,14 @@ export default {
   padding: 4px 8px;
   color: #ffffff;
   font-weight: bold;
+}
+
+.arena-count {
+  font-size: 18px;
+  margin-right: 24px;
+  background-color: #aeceff4d;
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-style: italic;
 }
 </style>
