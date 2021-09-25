@@ -1,8 +1,8 @@
 {
-  "name": "nulls-world",
+  "name": "nullsworld-webgame-ui",
   "version": "0.1.0",
   "private": true,
-  "author": "Pure-Peace",
+  "author": "nulls-network",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
