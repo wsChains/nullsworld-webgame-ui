@@ -195,7 +195,7 @@ export default {
         } catch (err) {
           hiedeApprovingHint()
           console.error(err)
-          this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
+          this.$message.error(`Arena #${this.arena.item_id} Challenge failed, please try again` || WALLET_ERRORS[err.code] || err.data?.message || err.message)
           this.approving = false
         }
       }
@@ -262,7 +262,7 @@ export default {
       } catch (err) {
         clearInterval(this.r)
         hiedeCombatingHint()
-        this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
+        this.$message.error(`Arena #${this.arena.item_id} Challenge failed, please try again` || WALLET_ERRORS[err.code] || err.data?.message || err.message)
         this.combating = false
         this.$emit('combatEnd')
       }
