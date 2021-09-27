@@ -4,32 +4,31 @@ NullsWorld-webgame-ui for PC.
 
 ### Run
 
-Recommend to use pnpm, it's faster.
+Recommend to use yarn, it's faster.
 
-**0x0.Install pnpm**
+**0x0.Install yarn**
 
 ```sh
-npm install pnpm -g
+npm install yarn -g
 ```
 
-**0x1.Install dependencies with pnpm**
+**0x1.Install dependencies with yarn**
 
 ```sh
-pnpm i
+yarn i
 ```
 
 **0x2.Run develop**
 
 ```sh
-pnpm run dev
+yarn run dev
 ```
 
 **0x3.Build release**
 
 ```sh
-pnpm run build
+yarn run build
 ```
-
 
 ## Team Nulls-Network
 

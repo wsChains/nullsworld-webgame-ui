@@ -1,5 +1,5 @@
 // Functions
-import { createApp, markRaw, computed, ref } from 'vue'
+import { createApp, markRaw, computed } from 'vue'
 import { newRouter } from '@/router'
 import { createPinia } from 'pinia'
 import mitt from 'mitt'
