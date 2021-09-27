@@ -2,7 +2,7 @@
     <div class="wallet-w">
         <div
             class="wallet-title"
-        >{{ wallet.connected ? wallet.isCorrectNetwork ? `Connected with ${wallet.wallet} ✔️` : `Wrong Network ❓` : 'Connect Wallet' }}</div>
+        >{{ wallet.connected ? wallet.isCorrectNetwork ? `Connected with ${wallet.connectedWallet} ✔️` : `Wrong Network ❓` : 'Connect Wallet' }}</div>
         <div
             v-if="!wallet.connected"
             class="wallet-introduce"
@@ -44,25 +44,30 @@
                 Copy address
             </a>
         </div>
-        <div v-if="wallet.connected && !wallet.isCorrectNetwork" class="flex justify-center items-center mt-4">
-            <color-button style="font-size: 20px;" @click="switchNetwork">Switch Network</color-button>
+        <div
+            v-if="wallet.connected && !wallet.isCorrectNetwork"
+            class="flex justify-center items-center mt-4"
+        >
+            <color-button style="font-size: 20px;" @click="wallet.switchNetwork">Switch Network</color-button>
         </div>
         <div class="wallet-top">
             <div
+                v-for="connector in connectors"
+                :key="connector.label"
                 :class="[
-                    item.connecting ? 'wallet-connecting' : '',
-                    selectedDefault == key ? 'wallet-frame-opt' : '',
-                    wallet.connected ? 'wallet-connected' : '', 'wallet-frame'
+                    connector.connecting ? 'wallet-connecting' : '',
+                    $root.connecting && !connector.connecting ? 'wallet-disabled-click' : '',
+                    connector.label === wallet.connectedWallet ? 'wallet-frame-opt' : '',
+                    connector.label === wallet.connectedWallet ? 'wallet-connected wallet-disabled-click' : '', 'wallet-frame'
                 ]"
-                v-for="(item, key) in list"
-                :key="key"
-                @click="selectWallet(key, item)"
+                @click="selectWallet(connector)"
             >
                 <div class="flex items-center">
-                    <LoadingOutlined v-show="item.connecting" class="px-2" spin />
-                    {{ walletLabel(item) }}
+                    <LoadingOutlined v-if="connector.connecting" class="px-2" spin />
+                    <div v-else-if="connector.label === wallet.connectedWallet" class="green-dot"></div>
+                    {{ walletLabel(connector) }}
                 </div>
-                <img class="img-h" :src="`/${item.img}`" />
+                <img class="img-h" :src="`/${connector.img}`" />
             </div>
         </div>
     </div>
@@ -71,21 +76,10 @@
 <script>
 import { cutEthAddress, accountExplorer } from '@/utils/common'
 import { CHAIN_ID_HEX } from '@/utils/wallet'
+import { walletConnectors } from '@/utils/walletConnectors'
 
 
 import { LoadingOutlined } from '@ant-design/icons-vue';
-
-const defaultValidator = () => !!window?.ethereum
-
-class WalletItem {
-    constructor(label, img, validator, link) {
-        this.label = label
-        this.img = img
-        this.isValid = validator || true
-        this.link = link
-        this.connecting = false
-    }
-}
 
 
 export default {
@@ -96,55 +90,47 @@ export default {
         return {
             cutEthAddress,
             accountExplorer,
-            selectedDefault: '0',
             width: '287px',
-            list: [
-                new WalletItem('MetaMask', 'metamask.png', defaultValidator, 'https://metamask.io/')
-            ],
+            connectors: walletConnectors,
             showMask: false,
         }
     },
     methods: {
-        walletLabel(item) {
-            if (item.connecting) return 'Connecting...'
+        walletLabel(connector) {
+            if (connector.connecting) return 'Connecting...'
 
-            return item.isValid() ?
-                this.wallet.connected ? `Account (${cutEthAddress(this.wallet.address, 8)})` : item.label
-                : `Please Install ${item.label}`
+            return connector.isValid() ?
+                this.wallet.connected && connector.label === this.wallet.connectedWallet ?
+                    `Account (${cutEthAddress(this.wallet.address, 8)})` : connector.label
+                : `Please Install ${connector.label}`
         },
-        setConnecting(bool, item) {
-            if (item) item.connecting = bool
+        setConnecting(bool, connector) {
+            if (connector) connector.connecting = bool
             this.$root.setConnecting(bool)
         },
-        async selectWallet(key, item) {
-            if (item.connecting) return
+        async selectWallet(connector) {
+            if (connector.connecting) return
 
-            if (!item.isValid() && item.link) {
-                window.open(item.link, "_blank")
+            if (!connector.isValid() && connector.link) {
+                window.open(connector.link, "_blank")
                 return
             }
 
-            this.setConnecting(true, item)
-            await this.wallet.init(true)
-            this.setConnecting(false, item)
+            this.setConnecting(true, connector)
+            await this.wallet.init({ connector, forceConnect: true })
+            this.setConnecting(false, connector)
 
-            this.selectedDefault = key
 
-            if (this.wallet?.connected) this.$root.showWalletConnect = false
+            if (this.wallet?.connected) {
+                this.$root.showWalletConnect = false
+                this.wallet.connectedWallet = connector.label
+            }
         },
         openInterface() {
             this.showMask = true
         },
         close() {
             this.showMask = false
-        },
-        switchNetwork() {
-            window?.ethereum?.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: CHAIN_ID_HEX }],
-            }).catch(err => {
-                this.$message.error(err.message)
-            })
         }
     }
 }
@@ -186,7 +172,7 @@ a svg {
     height: 68px;
     padding: 0 30px;
     border-radius: 10px;
-    border: 1px solid #e3d0c3;
+    border: 2px solid #f5e3d7;
     display: flex;
     font-size: 18px;
     justify-content: space-between;
@@ -210,6 +196,9 @@ a svg {
 
 .wallet-connected {
     font-weight: bold;
+}
+
+.wallet-disabled-click {
     pointer-events: none;
 }
 
@@ -235,5 +224,13 @@ a svg {
     font-size: 16px;
     padding: 15px 30px;
     text-align: center;
+}
+
+.green-dot {
+    height: 12px;
+    width: 12px;
+    background-color: #01ba96;
+    border-radius: 10px;
+    margin-right: 10px;
 }
 </style>
