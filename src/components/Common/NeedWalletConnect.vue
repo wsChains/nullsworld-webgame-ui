@@ -38,17 +38,9 @@ export default {
         }
     },
     methods: {
-        switchNetwork() {
-            window?.ethereum?.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: CHAIN_ID_HEX }],
-            }).catch(err => {
-                this.$message.error(err.message)
-            })
-        },
         handleButtonClick() {
             if (!this.wallet.connected) return this.$root.openGlobalModal('walletConnect')
-            else if (!this.wallet.isCorrectNetwork) return this.switchNetwork()
+            else if (!this.wallet.isCorrectNetwork) return this.wallet.switchNetwork()
         }
     }
 }

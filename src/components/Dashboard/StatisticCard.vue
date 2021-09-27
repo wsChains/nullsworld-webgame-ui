@@ -111,7 +111,7 @@ export default {
       this.fetching = false
     },
     numberFmt(digital) {
-      return digital ? formatNumber(removeDecimal(digital, this.decimal)) : 0
+      return digital ? formatNumber(Math.round(removeDecimal(digital, this.decimal))) : 0
     },
     handleSwitchTab(key) {
       this.currentTab = key

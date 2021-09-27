@@ -4,9 +4,8 @@ import { Contract } from 'ethers'
 
 
 import { cutEthAddress } from '@/utils/common'
-import { CHAIN_ID, tryNewWalletWatcher, errInfo, findEvent } from '@/utils/wallet'
+import { CHAIN_ID, CHAIN_ID_HEX, tryNewWalletWatcher, errInfo, findEvent } from '@/utils/wallet'
 import { ERC20 } from '@/contracts'
-
 
 
 export const useWallet = (app) => {
@@ -16,7 +15,6 @@ export const useWallet = (app) => {
             accountList: {},
             /** @type {string | null} */
             address: null,
-            wallet: 'MetaMask',
             chainId: null,
             /** @type { import('@/utils/wallet').WalletWatcher | null } **/
             $: null,
@@ -40,6 +38,9 @@ export const useWallet = (app) => {
             },
             noWallet() {
                 return !!window?.ethereum
+            },
+            connectedWallet(state) {
+                return state.$?.connector?.label
             }
         },
         actions: {
@@ -66,12 +67,10 @@ export const useWallet = (app) => {
                 if (!this.signer) return
                 return new Contract(tokenAddress, ERC20.abi, this.signer)
             },
-            async init(forceConnect = false) {
+            async init({ connector, forceConnect } = {}) {
                 if (!forceConnect && !window?.ethereum?.selectedAddress) return false
-
-                const { wallet, err } = await tryNewWalletWatcher((...ev) => {
+                const callback = (...ev) => {
                     if (!ev) return
-
                     const disconnect = findEvent(ev, 'disconnect')
                     const accountsChanged = findEvent(ev, 'accountsChanged')
                     const chainChanged = findEvent(ev, 'chainChanged')
@@ -80,8 +79,12 @@ export const useWallet = (app) => {
                     if (accountsChanged?.data?.length === 0) this.disconnect()
                     else if (accountsChanged?.data?.length) this.add(accountsChanged.data[0])
                     if (chainChanged) this.setChainId(chainChanged.data)
-                })
-                if (err) return app.$message.error(errInfo(err))
+                }
+                const { wallet, err } = await tryNewWalletWatcher(connector, callback)
+                if (err) {
+                    app.config.globalProperties.$message.error(errInfo(err))
+                    return false
+                }
 
                 this.$ = wallet
                 const { signer, signerAddress } = await wallet.getSigner()
@@ -89,6 +92,14 @@ export const useWallet = (app) => {
                 this.add(signerAddress)
                 this.setSigner(signer)
                 return true
+            },
+            async switchNetwork() {
+               this.$.connector.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: CHAIN_ID_HEX }],
+                }).catch(err => {
+                    app.config.globalProperties.$message.error(err.message)
+                })
             }
         }
     })()
