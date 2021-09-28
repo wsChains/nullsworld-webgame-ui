@@ -44,12 +44,7 @@
                 Copy address
             </a>
         </div>
-        <div
-            v-if="wallet.connected && !wallet.isCorrectNetwork"
-            class="flex justify-center items-center mt-4"
-        >
-            <color-button style="font-size: 20px;" @click="wallet.switchNetwork">Switch Network</color-button>
-        </div>
+
         <div class="wallet-top">
             <div
                 v-for="connector in connectors"
@@ -70,16 +65,30 @@
                 <img class="img-h" :src="`/${connector.img}`" />
             </div>
         </div>
+
+        <div class="flex justify-center items-center mt-12">
+            <color-button
+                v-if="wallet.connected && !wallet.isCorrectNetwork && wallet.connectedWallet !== 'WalletConnect'"
+                style="font-size: 16px; margin: 0 8px;"
+                buttonStyle="yellow"
+                @click="wallet.switchNetwork"
+            >Switch Network</color-button>
+            <color-button
+                v-if="wallet.connectedWallet === 'WalletConnect'"
+                style="font-size: 16px; margin: 0 8px;"
+                @click="wallet.tryDisconnect"
+            >Disconnect WalletConnect</color-button>
+        </div>
     </div>
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { cutEthAddress, accountExplorer } from '@/utils/common'
-import { CHAIN_ID_HEX } from '@/utils/wallet'
-import { walletConnectors } from '@/utils/walletConnectors'
+import { walletConnectors } from '@/utils/wallet/connectors'
 
 
-import { LoadingOutlined } from '@ant-design/icons-vue';
+import { LoadingOutlined } from '@ant-design/icons-vue'
 
 
 export default {
@@ -91,7 +100,7 @@ export default {
             cutEthAddress,
             accountExplorer,
             width: '287px',
-            connectors: walletConnectors,
+            connectors: markRaw(walletConnectors),
             showMask: false,
         }
     },
@@ -117,9 +126,9 @@ export default {
             }
 
             this.setConnecting(true, connector)
-            await this.wallet.init({ connector, forceConnect: true })
+            const result = await this.wallet.init({ connector })
             this.setConnecting(false, connector)
-
+            if (!result) return
 
             if (this.wallet?.connected) {
                 this.$root.showWalletConnect = false
