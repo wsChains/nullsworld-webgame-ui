@@ -77,7 +77,7 @@ import { h } from 'vue'
 import { CheckCircleTwoTone, SyncOutlined, CloseCircleTwoTone } from '@ant-design/icons-vue'
 import { BigNumber } from 'ethers'
 import { RingManager } from '@/contracts'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 
 

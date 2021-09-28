@@ -42,9 +42,6 @@ import CreateArena from '@/components/ModalContents/CreateArena.vue'
 import SelectNullsArena from '@/components/ModalContents/SelectNullsArena.vue'
 import SelectNullsCombat from '@/components/ModalContents/SelectNullsCombat.vue'
 
-import { Metamask } from '@/utils/walletConnectors'
-
-
 export default {
   components: {
     TopNavbar,
@@ -82,7 +79,7 @@ export default {
     }
   },
   async created() {
-    this.wallet.init({ connector: new Metamask() }).catch(() => { })
+    this.wallet.init().catch(() => { })
     this.removeLoadingPage()
   },
   methods: {

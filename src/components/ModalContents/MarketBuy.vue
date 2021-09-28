@@ -88,7 +88,7 @@ import NullsPreview from '@/components/Items/NullsPreview.vue'
 import NeedWalletConnect from '@/components/Common/NeedWalletConnect.vue'
 
 import { formatNumber, calcColor, removeDecimal } from '@/utils/common'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 
 export default {

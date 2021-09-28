@@ -120,7 +120,7 @@ import { BigNumber } from 'ethers'
 import { addDecimal, formatNumber, removeDecimal } from '@/utils/common'
 
 import { CheckCircleTwoTone, LoadingOutlined } from '@ant-design/icons-vue';
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 
 export default {

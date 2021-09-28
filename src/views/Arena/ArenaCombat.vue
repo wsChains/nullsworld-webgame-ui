@@ -118,7 +118,7 @@ import { RingManager, ERC20 } from '@/contracts'
 import { CheckCircleTwoTone, SyncOutlined, CloseCircleTwoTone } from '@ant-design/icons-vue'
 import { h } from 'vue'
 import { BigNumber } from 'ethers'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 
 export default {

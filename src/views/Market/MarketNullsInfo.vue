@@ -164,7 +164,7 @@ import empty from '@/components/Common/EmptyStatus.vue'
 import NullsPreview from '@/components/Items/NullsPreview.vue'
 import { h } from 'vue'
 import { CheckCircleTwoTone } from '@ant-design/icons-vue'
-import { WALLET_ERRORS } from '@/utils/wallet'
+import { WALLET_ERRORS } from '@/utils/wallet/constants'
 import { NullsWorldMarket } from '@/contracts'
 
 

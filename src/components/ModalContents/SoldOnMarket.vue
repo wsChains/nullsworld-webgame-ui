@@ -109,7 +109,7 @@ import { h } from 'vue'
 
 import NullsPreview from '@/components/Items/NullsPreview.vue'
 import { CheckCircleTwoTone, LoadingOutlined } from '@ant-design/icons-vue'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet'
+import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 const ITEM_KEY = 'nulls.online-play'
 

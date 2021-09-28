@@ -9,7 +9,6 @@
 </template>
 
 <script>
-import { CHAIN_ID_HEX } from '@/utils/wallet'
 
 export default {
     watch: {
