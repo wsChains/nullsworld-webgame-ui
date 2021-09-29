@@ -81,7 +81,9 @@ export const useWallet = (app) => {
                     if (window?.ethereum?.selectedAddress) {
                         connector = new Metamask()
                     } else {
-                        connector = new WalletConnect()
+                        if (localStorage.getItem('walletconnect')) {
+                            connector = new WalletConnect()
+                        }
                     }
                 }
                 if (!connector) return
