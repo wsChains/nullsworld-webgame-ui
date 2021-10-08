@@ -183,7 +183,7 @@ export default {
       this.$refs[id].openInterface()
     },
     goNullsDetail(nulls) {
-      this.$router.push({ name: 'NullsDetails', params: { nullsId: nulls.pet_id } })
+      this.$router.push({ name: 'NullsDetails', params: { nullsId: nulls.pet_id, petType: nulls.type } })
     }
   }
 }

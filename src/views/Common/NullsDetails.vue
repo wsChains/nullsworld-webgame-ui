@@ -14,22 +14,27 @@
             <div class="layout-right">
               <div class="synopsis-layout">
                 <div class="synopsis-title">Nulls's Stories</div>
-                <div class="synopsis-content">This nulls has no story yet...</div>
-                <div class="synopsis-buy">
-                  <color-button
-                    :disabled="pet?.status !== 4"
-                    v-show="!isGuardians"
-                    @click="handleGoCombat"
-                    buttonStyle="yellow"
-                  >Go Combat</color-button>
-                  <color-button
-                    :disabled="pet?.status !== 4"
-                    v-show="isGuardians"
-                    @click="handleCreateArena"
-                    buttonStyle="orange"
-                  >Create Arena</color-button>
-                  <color-button @click="showSoldModal = true" buttonStyle="blue">Sold on the market</color-button>
-                </div>
+                <a-spin tip="Loading..." :spinning="fetching">
+                  <div class="synopsis-content">This nulls has no story yet...</div>
+                  <div class="synopsis-buy">
+                    <color-button
+                      :disabled="pet?.status !== 4"
+                      v-show="!isGuardians"
+                      @click="handleGoCombat"
+                      buttonStyle="yellow"
+                    >Go Combat</color-button>
+                    <color-button
+                      :disabled="pet?.status !== 4"
+                      v-show="isGuardians"
+                      @click="handleCreateArena"
+                      buttonStyle="orange"
+                    >Create Arena</color-button>
+                    <color-button
+                      @click="showSoldModal = true"
+                      buttonStyle="blue"
+                    >Sold on the market</color-button>
+                  </div>
+                </a-spin>
               </div>
 
               <div class="record-list">
@@ -194,6 +199,8 @@ export default {
     }
   },
   created() {
+    const { petType } = this.$route.params
+    if (petType) this.pet.type = Number(petType)
     this.fetchData()
   },
   computed: {
