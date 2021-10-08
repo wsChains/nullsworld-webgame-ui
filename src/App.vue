@@ -42,6 +42,8 @@ import CreateArena from '@/components/ModalContents/CreateArena.vue'
 import SelectNullsArena from '@/components/ModalContents/SelectNullsArena.vue'
 import SelectNullsCombat from '@/components/ModalContents/SelectNullsCombat.vue'
 
+import { GLOBAL_WALLET_CONNECTING_KEY } from '@/utils/constants'
+
 export default {
   components: {
     TopNavbar,
@@ -62,7 +64,6 @@ export default {
       showModal: false,
       modalContent: undefined,
       connecting: false,
-      hideMessage: undefined,
       clickToClose: true,
       showWalletConnect: false,
       closingTimeout: -1
@@ -71,15 +72,28 @@ export default {
   watch: {
     connecting(newVal, oldVal) {
       if (newVal === oldVal) return
-      if (newVal === true) this.hideMessage = this.$message.loading('Wallet is being connected, please note the authorization...', 0)
-      else if (newVal === false && this.hideMessage) {
-        this.hideMessage()
-        this.hideMessage = false
+      if (newVal === true) {
+        this.$notification.open({
+          message: 'Wallet Connecting',
+          description: 'Wallet is being connected, please note the authorization...',
+          duration: 0,
+          placement: 'bottomLeft',
+          key: GLOBAL_WALLET_CONNECTING_KEY
+        })
+      }
+      else if (newVal === false) {
+        this.$notification.open({
+          message: this.wallet.connected ? 'Wallet is conneted ✔️' : 'Wallet not connected ❌',
+          description: this.wallet.connected ? `You are connected to the ${this.wallet.connectedWallet}.` : 'Wallet connect failed.',
+          duration: 2,
+          placement: 'bottomLeft',
+          key: GLOBAL_WALLET_CONNECTING_KEY
+        })
       }
     }
   },
   async created() {
-    this.wallet.init().catch(() => { })
+    if (!this.wallet.connected) this.wallet.init().catch(() => { })
     this.removeLoadingPage()
   },
   methods: {

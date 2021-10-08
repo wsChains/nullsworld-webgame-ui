@@ -121,7 +121,7 @@ export const useWallet = (app) => {
                     this.connectedWallet = ref(this.$?.connector?.label)
                 } catch (connectErr) {
                     console.error('[Wallet Store] connectErr: ', connectErr)
-                    app.config.globalProperties.$message.error(connectErr.message)
+                    /* app.config.globalProperties.$message.error(connectErr.message) */
                     return false
                 }
                 console.info('[Wallet Store] Wallet connect done.')
