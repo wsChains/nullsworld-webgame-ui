@@ -88,7 +88,16 @@ export default {
             if (status === 1) return this.$emit('onItemPurchased')
         },
         viewDetail() {
-            this.$router.push({ name: 'MarketNullsInfo', params: { sellId: this.data?.id, petId: this.data?.pet_id, petType: this.data?.type, petPrice: this.data?.price, petCurrent: this.data?.current } })
+            this.$router.push({
+                name: 'MarketNullsInfo',
+                params: {
+                    sellId: this.data?.id,
+                    petId: this.data?.pet_id,
+                    petType: this.data?.type,
+                    petPrice: this.data?.price,
+                    petCurrent: this.data?.current
+                }
+            })
         }
     }
 }

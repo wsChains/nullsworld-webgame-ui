@@ -36,7 +36,7 @@
                 </a-spin>
               </div>
 
-              <!-- <div class="record-list">
+              <div class="record-list">
                 <div class="record-title">Nulls' journey</div>
                 <a-spin tip="Loading..." :spinning="fetching">
                   <empty v-show="ringRecord?.length < 1" height="300px" />
@@ -90,7 +90,7 @@
                     </div>
                   </div>
                 </a-spin>
-              </div>-->
+              </div>
 
               <div class="record-list">
                 <div class="record-title">Transfer records</div>
@@ -212,6 +212,8 @@ export default {
     }
   },
   async created() {
+    const { petType } = this.$route.params
+    if (petType) this.pet.type = Number(petType)
     this.fetchData()
     this.initContract()
   },
