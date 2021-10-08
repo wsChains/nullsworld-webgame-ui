@@ -71,20 +71,20 @@ export default {
       formatNumber,
       cardTabs: [
         {
-          title: '30 days',
-          key: 3
+          title: 'Last 24h',
+          key: 1
         },
         {
           title: '7 days',
           key: 2
         },
         {
-          title: 'Last 24h',
-          key: 1
+          title: '30 days',
+          key: 3
         }
       ],
       decimal: 6,
-      currentTab: 3,
+      currentTab: 1,
       fetching: true,
       data: {},
       updateInterval: -1
