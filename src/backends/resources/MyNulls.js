@@ -18,5 +18,22 @@ export default {
      **/
     petDetail(params) {
         return get('pet/findDetails', { params })
-    }
+    },
+
+    /** 
+     * Get the nulls for which the arena can be created
+     * @param {{address: string}} params
+     * @return {Promise<import('axios').AxiosResponse<MyNulls.findNullsPK>>}
+     **/
+    findNullsPK(params) {
+        return get('pet/findByPkPet', { params })
+    },
+
+    /** 
+     * @param {{address: string}} params
+     * @return {Promise<import('axios').AxiosResponse<MyNulls.findNullsCreateArena>>}
+     **/
+    findNullsCreateArena(params) {
+        return get('pet/findByTypeAndAddress', { params })
+    },
 }

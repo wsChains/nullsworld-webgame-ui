@@ -23,15 +23,6 @@ export default {
     },
 
     /** 
-     * Get the nulls for which the arena can be created
-     * @param {{address: string}} params
-     * @return {Promise<import('axios').AxiosResponse<Ring.findByTypeAndAddress>>}
-     **/
-    findByTypeAndAddress(params) {
-        return get('pet/findByTypeAndAddress', { params })
-    },
-
-    /** 
      * @param {{id: number}} params
      * @return {Promise<import('axios').AxiosResponse<Ring.getRingById>>}
      **/

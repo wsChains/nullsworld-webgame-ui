@@ -22,6 +22,34 @@ export declare namespace MyNulls {
         }
     }
 
+    export declare class findNullsPK extends BaseResponse {
+        data: [
+            {
+                pet_id: number,
+                status: number,
+                owner_address: string,
+                type: number,
+                image: number,
+                create_time: number,
+                tx_hash: string,
+            }
+        ]
+    }
+
+    export declare class findNullsCreateArena extends BaseResponse {
+        data: [
+            {
+                pet_id: number,
+                status: number,
+                owner_address: string,
+                type: number,
+                image: number,
+                create_time: number,
+                tx_hash: string,
+            }
+        ]
+    }
+
     export declare class petDetail extends BaseResponse {
         data: {
             pet: {
@@ -111,21 +139,6 @@ export declare namespace Ring {
             ]
         }
     }
-
-    export declare class findByTypeAndAddress extends BaseResponse {
-        data: [
-            {
-                pet_id: number,
-                status: number,
-                owner_address: string,
-                type: number,
-                image: number,
-                create_time: number,
-                tx_hash: string,
-            }
-        ]
-    }
-
 
     export declare class ringRecord extends BaseResponse {
         data:
