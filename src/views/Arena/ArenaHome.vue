@@ -65,7 +65,7 @@
               class="search-input focus:outline-none focus:shadow-outline"
               placeholder="Enter Arena id to search"
             />
-            <color-button @click="handleSearch">Search</color-button>
+            <color-button @click="handleSearch" :disabled="fetching">Search</color-button>
           </div>
           <div style="background-color: #aeceff4d; padding: 8px 16px; border-radius: 16px;">
             <custom-checkbox v-model:checked="paramStore.autoSelectNulls">Auto nulls selection</custom-checkbox>
