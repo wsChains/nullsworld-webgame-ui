@@ -163,6 +163,9 @@ export default {
     async handleCombat() {
       if (!this.myPetId) return this.$message.error('Please choose your nulls before the combat.')
 
+      const TIPS_KEY = `arena-${this.arena.item_id}-${guid()}`
+      const title = (t) => `Arena #${this.arena.item_id}: ${t}`
+
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000_000)
       const allowance = await this.tokenContract['allowance'](this.wallet.address, RingManager.address)
@@ -170,91 +173,131 @@ export default {
       // Approve if need
       if (allowance < ALLOWANCE) {
         this.approving = true
-        let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
+        this.$notification.open({
+          message: title('Approving Required ❗'),
+          description: 'Your authorization is required to send the transaction, please go to your wallet to confirm...',
+          duration: 0,
+          key: TIPS_KEY
+        })
         const approveAmount = addDecimal(ALLOWANCE, this.arena.token_precision).toString()
         try {
           const approveTx = await this.tokenContract['approve'](RingManager.address, approveAmount)
-          hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
+          this.$notification.open({
+            message: title('Waiting for Approving...'),
+            description: WALLET_TIPS.txSend,
+            duration: 0,
+            key: TIPS_KEY
+          })
           await approveTx.wait().then(receipt => {
             console.log(receipt)
             if (receipt.status === 1) {
               console.log(`================approveTx=================`)
-              this.$message.success('Successful approve!')
-              hiedeApprovingHint()
+              this.$notification.open({
+                message: title('Successful approve ✔️'),
+                description: WALLET_TIPS.txSend,
+                duration: 0,
+                key: TIPS_KEY
+              })
               this.approving = false
             }
           })
         } catch (err) {
-          hiedeApprovingHint()
           console.error(err)
-          this.$message.error(`Arena #${this.arena.item_id} Challenge failed, please try again` || WALLET_ERRORS[err.code] || err.data?.message || err.message)
+          this.$notification.open({
+            message: title('Challenge failed ❌'),
+            description: 'please try again.',
+            duration: 2,
+            key: TIPS_KEY
+          })
           this.approving = false
         }
       }
 
       // Send pk transcation
-      this.tipText = 'Preparing to send a transaction...'
       this.combating = true
       this.$emit('combatStart')
-      let hiedeCombatingHint = this.$message.loading({ content: `Arena #${this.arena.item_id}: Combat requests are being submitted...`, key: `combating${this.arena.item_id}`, duration: 0 })
+      this.$notification.open({
+        message: title('Preparing Transaction ✨'),
+        description: 'Getting latest block number...',
+        duration: 0,
+        key: TIPS_KEY
+      })
 
       const latestBlock = await this.wallet.signer.provider.getBlock()
       if (!latestBlock) {
-        hiedeCombatingHint()
         this.combating = false
-        this.$message.error('Could not get latest block, please try again.')
+        this.$notification.open({
+          message: title('Challenge failed ❌'),
+          description: 'Could not get latest block, please try again.',
+          duration: 2,
+          key: TIPS_KEY
+        })
         return
       }
 
       try {
         const deadline = latestBlock.timestamp + 1800
         const uuid = guid()
-        hiedeCombatingHint = this.$message.loading({ content: `Arena #${this.arena.item_id}: Sending...`, key: `combating${this.arena.item_id}`, duration: 0 })
+        this.$notification.open({
+          message: title('Request to start the combat... 🔮'),
+          description: 'The battle is about to start, please go to the wallet to confirm. 📑',
+          duration: 0,
+          key: TIPS_KEY
+        })
         const pkTx = await this.ringManagerContract.pk(this.arena.item_id, this.myPetId, deadline, uuid)
         this.$emit('transcationSended')
-        hiedeCombatingHint = this.$message.loading({ content: `Arena #${this.arena.item_id}: Waiting for the block to come out...`, key: `combating${this.arena.item_id}`, duration: 0 })
+        this.$notification.open({
+          message: title('Waiting for combat requests. 📑'),
+          description: 'Combat request has been sent, waiting for combat to be accepted.',
+          duration: 0,
+          key: TIPS_KEY
+        })
         await pkTx.wait().then(receipt => {
           console.log(receipt)
           if (receipt.status === 1) {
-            hiedeCombatingHint = this.$message.loading({ content: `Arena #${this.arena.item_id}: Fighting!!!!!`, key: `combating${this.arena.item_id}`, duration: 0 })
-            console.log(`================pkTx=================`)
             this.$notification.open({
-              message: `Arena #${this.arena.item_id}: Combat has begun!`,
-              description: `The combat has begun, please wait for the result... UUID: ${uuid}`,
-              icon: h(SyncOutlined, { twoToneColor: '#52c41a' }),
+              message: title('The Combat has begun! 🔥🔥🔥'),
+              description: `The combat has begun, please wait for the result. 💪`,
+              duration: 0,
+              key: TIPS_KEY,
             })
+            console.log(`================pkTx=================`)
             this.r = setInterval(async () => {
               const { data } = await Ring.requestCombatResult({ uuid })
-              this.$emit('combatEnd')
               if (!data.data) return
 
+              this.$emit('combatEnd')
               if (data.data.isWin === 0) {
                 this.$notification.open({
-                  message: `Arena #${this.arena.item_id}: You win!`,
-                  description: `You win! ${uuid}`,
-                  icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' }),
+                  message: title('You got the victory! 🏳️‍🌈🏳️‍🌈🏳️‍🌈'),
+                  description: `Congratulations on your victory! 💪`,
+                  duration: 7,
+                  key: TIPS_KEY,
                 })
                 this.$emit('onWin')
                 clearInterval(this.r)
                 this.combating = false
-                hiedeCombatingHint()
               } else {
                 this.$notification.open({
-                  message: `Arena #${this.arena.item_id}: You lose!`,
-                  description: `You lose! ${uuid}`,
-                  icon: h(CloseCircleTwoTone, { twoToneColor: '#FF3B27' }),
+                  message: title('You lost the battle. 🏳️🏳️🏳️'),
+                  description: `Please don't be discouraged and keep up the good work! 💪`,
+                  duration: 7,
+                  key: TIPS_KEY,
                 })
                 clearInterval(this.r)
                 this.combating = false
-                hiedeCombatingHint()
               }
             }, 2000);
           }
         })
       } catch (err) {
         clearInterval(this.r)
-        hiedeCombatingHint()
-        this.$message.error(`Arena #${this.arena.item_id} Challenge failed, please try again` || WALLET_ERRORS[err.code] || err.data?.message || err.message)
+        this.$notification.open({
+          message: title('Challenge failed ❌'),
+          description: 'Challenge failed, please try again.',
+          duration: 2,
+          key: TIPS_KEY
+        })
         this.combating = false
         this.$emit('combatEnd')
       }
