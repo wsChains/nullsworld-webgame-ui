@@ -142,18 +142,10 @@ export default {
     updateMyNulls(isAutoUpdate = false) {
       if (!isAutoUpdate) this.fetching = true
 
-      MyNulls.list({ address: this.wallet.address, status: 4, current: 1, pageSize: 999 }).then(({ data }) => {
+      MyNulls.findNullsPK({ address: this.wallet.address }).then(({ data }) => {
         this.fetching = false
         if (data.code === 200) {
-          const nulls = data.data.rows
-          for (const idx in nulls) {
-            const item = nulls[idx]
-            item.status_code = item.status
-            if (item.type === 255) nulls.splice(idx, 1)
-          }
-
-          this.total = data.data.count
-          this.nulls = nulls
+          this.nulls = data.data
           this.getRandNulls()
           if (!isAutoUpdate && this.paramStore.autoSelectNulls) this.handleCombat()
         }
@@ -325,13 +317,13 @@ export default {
 }
 
 .nulls:hover {
-  transform: scale(1.1);
-  filter: brightness(1.1);
+  transform: scale(0.95);
+  filter: brightness(0.95);
 }
 
 .nulls:hover {
-  transform: scale(0.95);
-  filter: brightness(0.95);
+  transform: scale(1.1);
+  filter: brightness(1.1);
 }
 
 .nulls-selected {

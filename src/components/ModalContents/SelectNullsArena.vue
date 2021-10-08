@@ -44,10 +44,10 @@
 </template>
 
 <script>
-import { Ring } from '@/backends'
+import { MyNulls } from '@/backends'
 import Nulls from '@/components/Items/NullsItem.vue'
 import NoNulls from '@/components/Items/NoNulls.vue'
-import { calcNullsImage, calcColor, guid } from '@/utils/common'
+import { calcNullsImage, calcColor } from '@/utils/common'
 
 
 export default {
@@ -102,7 +102,7 @@ export default {
     },
     async updateData(isAutoUpdate = false) {
       if (!isAutoUpdate) this.fetching = true
-      const { data } = await Ring.findByTypeAndAddress({
+      const { data } = await MyNulls.findNullsCreateArena({
         address: this.wallet.address
       })
       this.fetching = false
@@ -172,13 +172,13 @@ export default {
 }
 
 .nulls:hover {
-  transform: scale(1.1);
-  filter: brightness(1.1);
+  transform: scale(0.95);
+  filter: brightness(0.95);
 }
 
 .nulls:hover {
-  transform: scale(0.95);
-  filter: brightness(0.95);
+  transform: scale(1.1);
+  filter: brightness(1.1);
 }
 
 .nulls-selected {
