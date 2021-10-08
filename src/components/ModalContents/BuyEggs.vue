@@ -113,13 +113,11 @@
 </template>
 
 <script>
-import { h } from 'vue'
-
 import { NullsEggManager } from '@/contracts'
 import { BigNumber } from 'ethers'
-import { addDecimal, formatNumber, removeDecimal } from '@/utils/common'
+import { addDecimal, formatNumber, removeDecimal, guid } from '@/utils/common'
 
-import { CheckCircleTwoTone, LoadingOutlined } from '@ant-design/icons-vue';
+import { LoadingOutlined } from '@ant-design/icons-vue';
 import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
 
@@ -216,6 +214,11 @@ export default {
     },
     async handlePurchase() {
       if (this.approving) return
+
+      const TIPS_KEY = `buyEggs-${guid()}`
+      const title = (t) => `BuyEggs: ${t}`
+
+
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000)
       const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsEggManager.address)
@@ -231,52 +234,84 @@ export default {
       // Approve if need
       if (allowance < ALLOWANCE) {
         this.approving = true
-        let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
+        this.$notification.open({
+          message: title('Approving Required ❗'),
+          description: 'Your authorization is required to send the transaction, please go to your wallet to confirm...',
+          duration: 0,
+          key: TIPS_KEY
+        })
         const approveAmount = addDecimal(ALLOWANCE, this.decimals).toString()
         try {
           const approveTx = await this.tokenContract['approve'](NullsEggManager.address, approveAmount)
-          hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
+          this.$notification.open({
+            message: title('Waiting for Approving...'),
+            description: WALLET_TIPS.txSend,
+            duration: 0,
+            key: TIPS_KEY
+          })
           await approveTx.wait().then(receipt => {
             console.log(receipt)
             if (receipt.status === 1) {
               console.log(`================approveTx=================`)
-              this.$message.success('Successful approve!')
-              hiedeApprovingHint()
+              this.$notification.open({
+                message: title('Successful approve ✔️'),
+                description: 'Successful approve.',
+                duration: 0,
+                key: TIPS_KEY
+              })
               this.approving = false
             }
           })
         } catch (err) {
-          hiedeApprovingHint()
           console.error(err)
-          this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
+          this.$notification.open({
+            message: title('Approving failed ❌'),
+            description: WALLET_ERRORS[err.code] || err.data?.message || err.message,
+            duration: 2,
+            key: TIPS_KEY
+          })
           this.approving = false
         }
       }
 
       // Purchase eggs
-      let hidePurchasingHint = this.$message.loading({ content: 'Awaiting approval of transaction', key: 'purchasing', duration: 0 })
+      this.$notification.open({
+        message: title('Purchasing Eggs 📑'),
+        description: 'Awaiting approval of transaction...',
+        duration: 0,
+        key: TIPS_KEY
+      })
       this.purchasing = true
       try {
         const purchaseTx = await this.eggManagerContract['buy'](this.eggAmount, this.tokenAddress)
-        hidePurchasingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'purchasing', duration: 0 })
+        this.$notification.open({
+          message: title('Waiting for Purchasing result 📑'),
+          description: WALLET_TIPS.txSend,
+          duration: 0,
+          key: TIPS_KEY
+        })
         await purchaseTx.wait().then(receipt => {
           console.log(receipt)
           if (receipt.status === 1) {
             console.log(`===============purchaseTx==================`)
             this.purchasing = false
-            hidePurchasingHint()
             this.updateBalance()
             this.$notification.open({
-              message: 'Successful purchase',
+              message: title('Successful purchase ✔️'),
               description: `Successfully purchased ${this.eggAmount} eggs, please check in MyEggs!`,
-              icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' }),
+              duration: 7,
+              key: TIPS_KEY
             })
           }
         })
       } catch (err) {
-        hidePurchasingHint()
         console.error(err)
-        this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
+        this.$notification.open({
+          message: title('Approving failed ❌'),
+          description: WALLET_ERRORS[err.code] || err.data?.message || err.message,
+          duration: 2,
+          key: TIPS_KEY
+        })
         this.purchasing = false
       }
     }

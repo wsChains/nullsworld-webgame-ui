@@ -73,11 +73,10 @@ import { MyNulls, Ring } from '@/backends'
 import { calcNullsImage, calcColor, addDecimal, guid, randChoiceNum } from '@/utils/common'
 import Nulls from '@/components/Items/NullsItem.vue'
 import NoNulls from '@/components/Items/NoNulls.vue'
-import { h } from 'vue'
-import { CheckCircleTwoTone, SyncOutlined, CloseCircleTwoTone } from '@ant-design/icons-vue'
+import { SyncOutlined } from '@ant-design/icons-vue'
 import { BigNumber } from 'ethers'
 import { RingManager } from '@/contracts'
-import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
+import { WALLET_TIPS } from '@/utils/wallet/constants'
 
 
 
@@ -194,7 +193,7 @@ export default {
               console.log(`================approveTx=================`)
               this.$notification.open({
                 message: title('Successful approve ✔️'),
-                description: WALLET_TIPS.txSend,
+                description: 'Successful approve.',
                 duration: 0,
                 key: TIPS_KEY
               })
