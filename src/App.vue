@@ -25,9 +25,9 @@
 import { BackTop } from 'ant-design-vue'
 
 // Layouts
-import TopNavbar from './layouts/TopNavbar.vue'
-import MainContent from './layouts/MainContent.vue'
-import FooterBar from './layouts/FooterBar.vue'
+import TopNavbar from '@/layouts/TopNavbar.vue'
+import MainContent from '@/layouts/MainContent.vue'
+import FooterBar from '@/layouts/FooterBar.vue'
 
 // Modal components
 import CustomModal from '@/components/Common/CustomModal.vue'
