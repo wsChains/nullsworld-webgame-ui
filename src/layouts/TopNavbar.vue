@@ -21,26 +21,26 @@
                     <span class="px-3">{{ item.name }}</span>
                   </button>
                 </template>
-                <!-- <a-dropdown placement="bottomCenter"> -->
-                <div
-                  :class="[$route.path?.includes('profile') && $route.name !== 'MyEggs' ? 'current-route' : '', 'me']"
-                  @click="$router.push({ name: 'MyNulls' })"
-                >
-                  <!-- <img class="avatar" src="/home@1x.png" /> -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-9 w-9"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                <a-dropdown placement="bottomCenter">
+                  <div
+                    :class="[$route.path?.includes('profile') && $route.name !== 'MyEggs' ? 'current-route' : '', 'me']"
+                    @click="$router.push({ name: 'MyNulls' })"
                   >
-                    <path
-                      fill-rule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                  <span class="username">{{ wallet.cuttedAddress || 'No Wallet' }}</span>
-                  <!-- <svg
+                    <!-- <img class="avatar" src="/home@1x.png" /> -->
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-9 w-9"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    <span class="username">{{ wallet.cuttedAddress || 'No Wallet' }}</span>
+                    <!-- <svg
                     xmlns="http://www.w3.org/2000/svg"
                     style="height: 24px; margin-left: 2px"
                     viewBox="0 0 20 20"
@@ -51,16 +51,16 @@
                       d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                       clip-rule="evenodd"
                     />
-                  </svg>-->
-                </div>
-                <!-- <template #overlay>
+                    </svg>-->
+                  </div>
+                  <template #overlay>
                     <custom-dropdown>
                       <li v-for="item in menuItems" :key="item" @click="navigateTo(item)">
                         <div>{{ item.text }}</div>
                       </li>
                     </custom-dropdown>
                   </template>
-                </a-dropdown>-->
+                </a-dropdown>
               </div>
             </div>
           </div>
@@ -148,10 +148,10 @@ export default {
 
 <style scoped>
 .current-route {
-  background-color: #FEF9E74D;
+  background-color: #fef9e74d;
   filter: brightness(1.05);
   transform: scale(1.1);
-  box-shadow: 0 0 30px #fef9e74D;
+  box-shadow: 0 0 30px #fef9e74d;
 }
 
 .nav-pop-button {
