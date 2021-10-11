@@ -50,10 +50,13 @@ export default {
 <style scoped>
 .current-route {
     background-color: rgba(255, 255, 255, 0.9);
+    font-weight: bold;
+    border-color: #6CC5FF66 !important;
 }
 
 .item-list-card-header-button {
     background-image: none;
+    border-top: 3px solid transparent;
 }
 
 .item-list-card-header-button-active::after {
