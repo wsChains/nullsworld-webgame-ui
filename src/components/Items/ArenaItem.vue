@@ -1,5 +1,5 @@
 <template>
-    <div v-show="!(hideInCombat && combating)" class="arena-item">
+    <div v-show="!(hideInCombat && data?.combating)" class="arena-item">
         <div
             v-if="wallet.address?.toLowerCase() === data?.owner_address?.toLowerCase()"
             class="your-own-arena"
@@ -18,7 +18,7 @@
             <div class="arena-item-content">
                 <div>
                     <div
-                        :class="`info-block-num ${calcColor(data?.item_id)} inline-block`"
+                        :class="`arena-num ${calcColor(data?.item_id)} inline-block`"
                     >#{{ data?.item_id }}</div>
                 </div>
                 <div class="arena-item-info mt-3">
@@ -26,18 +26,18 @@
                     Tickets: {{ formatNumber(removeDecimal(data?.tickets, data?.token_precision)) }}
                     {{ data?.token_name }}
                 </div>
-                <div class="arena-item-info mt-2">
+                <div class="arena-item-info mt-1">
                     <img src="/star-small.png" />
                     Multiplier: {{ data?.max_multipe }}x
                 </div>
-                <div class="arena-item-info mt-2">
+                <div class="arena-item-info mt-1">
                     <img src="/diamond-small.png" />
                     Prize Pool:
                     {{ formatNumber(removeDecimal(ended ? data?.max_jackpot : data?.jackpot, data?.token_precision)) }}
                     {{ data?.token_name }}
                 </div>
             </div>
-            <div class="flex items-center justify-center pt-4 pb-8">
+            <div class="flex items-center justify-center pt-2 pb-6">
                 <color-button
                     buttonStyle="yellow"
                     :disabled="ended"
@@ -54,6 +54,10 @@
             @combatEnd="combatEnd"
             @transcationSended="transcationSended"
             @onWin="onWin"
+            @onLose="onLose"
+            @combatApproved="combatApproved"
+            @combatApproving="combatApproving"
+            @combatFailed="combatFailed"
         />
     </custom-modal>
 </template>
@@ -112,26 +116,39 @@ export default {
         }
     },
     methods: {
-        combatStart() {
+        combatStart(e) {
             this.statusText = 'Fighting...'
             this.showModal = false
-            this.combating = true
+            this.$emit('combatStart', e)
             this.showMask = true
         },
-        combatEnd() {
+        combatEnd(e) {
             this.statusText = ''
             this.showMask = false
-            this.combating = false
+            this.$emit('combatEnd', e)
             clearInterval(this.combatTimeInterval)
         },
-        transcationSended() {
+        transcationSended(e) {
             clearInterval(this.combatTimeInterval)
             this.combatTimeInterval = setInterval(() => {
                 this.combatTime += 1000
             }, 1000)
+            this.$emit('transcationSended', e)
         },
-        onWin() {
-            this.$emit('onWin', this.data.item_id)
+        onWin(e) {
+            this.$emit('onWin', e)
+        },
+        onLose(e) {
+            this.$emit('onLose', e)
+        },
+        combatApproved(e) {
+            this.$emit('combatApproved', e)
+        },
+        combatApproving(e) {
+            this.$emit('combatApproving', e)
+        },
+        combatFailed(e) {
+            this.$emit('combatFailed', e)
         }
     },
 }
@@ -143,7 +160,7 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 366px;
+    width: 266px;
     border-radius: 10px;
     border: 2px solid #ff7427b3;
     user-select: none;
@@ -151,7 +168,7 @@ export default {
     transition: 0.2s ease;
     position: relative;
     overflow: hidden;
-    margin: 0 2rem 2rem 0;
+    margin: 0 1rem 2rem 1rem;
 }
 
 .arena-content {
@@ -168,14 +185,14 @@ export default {
     transform: scale(0.9);
 }
 
-.arena-item:last-child:nth-child(3n - 1) {
-    margin-right: calc(366px + 4rem);
+.arena-item:last-child:nth-child(4n - 1) {
+    margin-right: calc(266px + 4rem);
 }
 
 .arena-item-img {
     font-size: 20px;
     display: flex;
-    height: 190px;
+    height: 140px;
     width: 100%;
     justify-content: center;
     align-items: center;
@@ -200,6 +217,7 @@ export default {
     display: flex;
     align-items: center;
     color: #111111;
+    font-size: 13px;
 }
 
 .arena-mask {
@@ -234,5 +252,13 @@ export default {
     color: #ffdf52;
     font-weight: bold;
     border-radius: 0 0 0 8px;
+}
+
+.arena-num {
+    padding: 2px 6px;
+    border-radius: 16px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
 }
 </style>
