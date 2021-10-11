@@ -209,12 +209,14 @@ export default {
             key: TIPS_KEY
           })
           this.approving = false
+          this.$emit('combatFailed', { petId: this.myPetId, result: 'Failed to transcation approving' })
+          return
         }
       }
 
-      // Send pk transcation
+      // Ready to send pk transcation
       this.combating = true
-      this.$emit('combatStart')
+      this.$emit('combatStart', { petId: this.myPetId })
       this.$notification.open({
         message: title('Preparing Transaction ✨'),
         description: 'Getting latest block number...',
@@ -224,19 +226,22 @@ export default {
 
       const latestBlock = await this.wallet.signer.provider.getBlock()
       if (!latestBlock) {
-        this.combating = false
         this.$notification.open({
           message: title('Challenge failed ❌'),
           description: 'Could not get latest block, please try again.',
           duration: 2,
           key: TIPS_KEY
         })
+        this.combating = false
+        this.$emit('combatEnd', { petId: this.myPetId })
+        this.$emit('combatFailed', { petId: this.myPetId, result: 'Failed to get latest block' })
         return
       }
 
+      // Send pk transcation
+      const uuid = guid()
       try {
         const deadline = latestBlock.timestamp + 1800
-        const uuid = guid()
         this.$notification.open({
           message: title('Request to start the combat... 🔮'),
           description: 'The battle is about to start, please go to the wallet to confirm. 📑',
@@ -244,7 +249,7 @@ export default {
           key: TIPS_KEY
         })
         const pkTx = await this.ringManagerContract.pk(this.arena.item_id, this.myPetId, deadline, uuid)
-        this.$emit('transcationSended')
+        this.$emit('combatApproving', { petId: this.myPetId, uuid, pkTx: pkTx.hash })
         this.$notification.open({
           message: title('Waiting for combat requests. 📑'),
           description: 'Combat request has been sent, waiting for combat to be accepted.',
@@ -254,6 +259,7 @@ export default {
         await pkTx.wait().then(receipt => {
           console.log(receipt)
           if (receipt.status === 1) {
+            this.$emit('combatApproved', { petId: this.myPetId, uuid })
             this.$notification.open({
               message: title('The Combat has begun! 🔥🔥🔥'),
               description: `The combat has begun, please wait for the result. 💪`,
@@ -265,7 +271,7 @@ export default {
               const { data } = await Ring.requestCombatResult({ uuid })
               if (!data.data) return
 
-              this.$emit('combatEnd')
+              this.$emit('combatEnd', { petId: this.myPetId, uuid })
               if (data.data.isWin === 0) {
                 this.$notification.open({
                   message: title('You got the victory! 🏳️‍🌈🏳️‍🌈🏳️‍🌈'),
@@ -273,7 +279,7 @@ export default {
                   duration: 7,
                   key: TIPS_KEY,
                 })
-                this.$emit('onWin')
+                this.$emit('onWin', { petId: this.myPetId, uuid })
                 clearInterval(this.r)
                 this.combating = false
               } else {
@@ -283,6 +289,7 @@ export default {
                   duration: 7,
                   key: TIPS_KEY,
                 })
+                this.$emit('onLose', { petId: this.myPetId, uuid })
                 clearInterval(this.r)
                 this.combating = false
               }
@@ -298,7 +305,10 @@ export default {
           key: TIPS_KEY
         })
         this.combating = false
-        this.$emit('combatEnd')
+        this.$emit('combatEnd', { petId: this.myPetId, uuid })
+        const result = err.code === 4001 ? err.message : 'BlockChain Error'
+        this.$emit('combatFailed', { petId: this.myPetId, uuid, result })
+        return
       }
     }
   }
