@@ -1,7 +1,35 @@
 <template>
   <div class="w-full flex-1">
     <Notice />
-    <div class="item-list-card mt-6">
+    <div class="item-list-card mt-6 relative">
+      <div class="incombat-box">
+        <div
+          :class="[showIncombatBox ? 'rorate-incombat-button' : '', 'incombat-button']"
+          @click="showIncombatBox = !showIncombatBox"
+        >
+          <img class="incombat-button-image" src="/ring.png" />
+          <div
+            :class="[!combatingArena.length || showIncombatBox ? 'hide-bulb' : '', 'incombat-button-bulb']"
+          >{{ combatingArena.length }}</div>
+        </div>
+        <div :class="[showIncombatBox ? 'show-incombat-content' : '', 'incombat-content']">
+          <div class="incombat-content-raw">
+            <div class="incombat-title">
+              Combating
+              <span style="font-size: 12px;">({{ combatingArena.length }})</span>
+            </div>
+            <div class="incombat-arena-box">
+              <empty style="margin-top: 20px;" v-show="combatingArena?.length < 1" />
+              <InCombatArenaItem
+                v-for="ca in combatingArena"
+                :key="`${ca.item_id}-combating-arena-item`"
+                :data="ca"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="item-list-card-body">
         <div class="options-bar filter-bar px-12 py-10">
           <div class="flex items-center">
@@ -76,10 +104,16 @@
           <div class="arena-list px-12 mt-5">
             <empty v-show="arenaList?.length < 1" />
             <ArenaItem
-              v-for="a in arenaList"
+              v-for="(a, idx) in arenaList"
               :key="`${a.item_id}-arena-item`"
               :data="a"
-              @onWin="onWin"
+              @onWin="onWin($event, a, idx)"
+              @onLose="onLose($event, a, idx)"
+              @combatStart="combatStart($event, a, idx)"
+              @combatEnd="combatEnd($event, a, idx)"
+              @combatApproved="combatApproved($event, a, idx)"
+              @combatApproving="combatApproving($event, a, idx)"
+              @combatFailed="combatFailed($event, a, idx)"
               :hideInCombat="hideInCombat"
               :ended="isEnded"
             />
@@ -95,6 +129,85 @@
           />
         </div>
       </div>
+      <div
+        :class="[openBattleConsole ? 'battle-console-box-unfold' : 'battle-console-box-fold', 'battle-console-box']"
+      >
+        <div class="battle-console-head" @click="openBattleConsole = !openBattleConsole">
+          <div class="flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              :class="openBattleConsole ? 'rotate-battle-console-icon' : '', 'battle-console-icon'"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 11l7-7 7 7M5 19l7-7 7 7"
+              />
+            </svg>
+            <div class="px-4">Battle Console</div>
+          </div>
+          <div class="battle-console-bulb" v-show="battleRecords.length">{{ battleRecords.length }}</div>
+        </div>
+        <div class="battle-console-content">
+          <empty style="margin-top: 20px;" v-show="battleRecords?.length < 1" />
+          <div
+            v-for="(rec, idx) in battleRecords.sort((a, b) => b.time - a.time)"
+            :key="`battle-record-${idx}`"
+            class="battle-record-line"
+          >
+            <div class="battle-record-id" style="background-color: orange;">{{ rec?.id }}</div>
+            <div
+              :class="[calcColor(rec?.arena?.item_id), 'battle-record-id']"
+              style="min-width: 100px;"
+            >Arena #{{ rec?.arena?.item_id }}</div>
+            <div
+              :class="[eventColor(rec?.event), 'battle-record-id']"
+              style="min-width: 125px;"
+            >{{ rec?.event }}</div>
+            <div class="battle-record-time">{{ formatDate(rec.time, { fromNow: true }) }}</div>
+            <div class="flex" v-if="rec.event === 'combatStart'">
+              Upcoming challenge with
+              <div
+                :class="[calcColor(rec?.ev?.petId), 'battle-record-id mx-2']"
+              >nulls #{{ rec.ev.petId }}</div>, tickets:
+              <div class="font-bold px-2">
+                {{
+                  formatNumber(removeDecimal(rec.arena.tickets, rec.arena.token_precision))
+                }} {{ rec.arena.token_name }}
+              </div>, please approve.
+            </div>
+            <div class="flex" v-else-if="rec.event === 'combatApproving'">
+              Waiting for blockchain results.
+              <div class="font-bold px-2">
+                TX:
+                <a target="_blank" :href="txExplorer(rec.ev.pkTx)">{{ rec.ev.pkTx }}</a>
+              </div>
+            </div>
+            <div class="flex" v-else-if="rec.event === 'combatApproved'">
+              The battle has begun!
+              <div class="font-bold px-2">UUID: {{ rec.ev.uuid }}</div>
+            </div>
+            <div class="flex" v-else-if="rec.event === 'combatFailed'">
+              Combat failed, error message:
+              <div class="font-bold px-2">{{ rec.ev.result }}</div>
+            </div>
+            <div class="flex" v-else-if="rec.event === 'lose'">
+              Combat Failed!
+              <div class="font-bold px-2">UUID: {{ rec.ev.uuid }}</div>
+            </div>
+            <div class="flex" v-else-if="rec.event === 'lose'">
+              You win the battle!
+              <div class="font-bold px-2">UUID: {{ rec.ev.uuid }}</div>
+            </div>
+            <div class="flex" v-else>{{ rec }}</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -102,31 +215,36 @@
 
 <script>
 import { Ring } from '@/backends'
-import { formatNumber, removeDecimal, calcArenaImage, calcColor } from '@/utils/common'
+import { formatNumber, removeDecimal, formatDate, calcColor, txExplorer } from '@/utils/common'
+
 import Notice from '@/components/Common/NoticeBar.vue'
 import empty from '@/components/Common/EmptyStatus.vue'
-
 import CustomCheckbox from '@/components/Common/CustomCheckbox.vue'
+
 import ArenaItem from '@/components/Items/ArenaItem.vue'
+import InCombatArenaItem from '@/components/Items/InCombatArenaItem.vue'
+
 
 export default {
   components: {
-    empty, Notice, CustomCheckbox, ArenaItem
+    empty, Notice, CustomCheckbox, ArenaItem, InCombatArenaItem
   },
   data() {
     return {
+      showIncombatBox: false,
       arenaId: undefined,
       arenaTokenAddress: undefined,
       showModal: false,
-      formatNumber, removeDecimal, calcArenaImage, calcColor,
+      formatNumber, removeDecimal, formatDate, calcColor, txExplorer,
       currentPage: 1,
       total: 0,
-      pageSize: 9,
+      pageSize: 12,
       hideInCombat: false,
       searchInput: undefined,
       fetching: true,
       selectedFilter: 1,
       updateInterval: -1,
+      openBattleConsole: false,
       filters: [
         {
           text: 'Challengable',
@@ -156,8 +274,9 @@ export default {
           key: 3
         }
       ],
-
+      battleRecords: [],
       arenaList: [],
+      combatingArena: []
     }
   },
   unmounted() {
@@ -213,14 +332,48 @@ export default {
       this.arenaTokenAddress = a.token
       this.showModal = true
     },
-    onWin(arenaId) {
-      for (let i in this.arenaList) {
-        const arena = this.arenaList[i]
-        if (arena.item_id === arenaId) {
-          this.arenaList.splice(i, 1)
-          break
-        }
+    onWin(ev, arena, idx) {
+      this.newBattleRecord('win', ev, arena)
+      this.arenaList.splice(idx, 1)
+    },
+    onLose(ev, arena, idx) {
+      this.newBattleRecord('lose', ev, arena)
+    },
+    combatStart(ev, arena, idx) {
+      this.newBattleRecord('combatStart', ev, arena)
+      this.combatingArena.push(arena)
+    },
+    combatEnd(ev, arena, idx) {
+      const index = this.combatingArena.findIndex(i => i.item_id === arena.item_id)
+      if (index !== -1) {
+        this.combatingArena.splice(index, 1)
       }
+    },
+    combatApproving(ev, arena, idx) {
+      this.newBattleRecord('combatApproving', ev, arena)
+    },
+    combatApproved(ev, arena, idx) {
+      this.newBattleRecord('combatApproved', ev, arena)
+    },
+    combatFailed(ev, arena, idx) {
+      this.newBattleRecord('combatFailed', ev, arena)
+    },
+    newBattleRecord(event, ev, arena) {
+      this.battleRecords.push({
+        id: this.battleRecords.length + 1,
+        event, arena, ev, time: new Date()
+      })
+    },
+    eventColor(event) {
+      const dict = {
+        combatStart: 'rare-blue',
+        combatApproving: 'rare-grey',
+        combatApproved: 'rare-purple',
+        lose: 'rare-red',
+        win: 'rare-green',
+        combatFailed: 'rare-orange'
+      }
+      return dict[event] || 'rare-grey'
     }
   },
   computed: {
@@ -374,5 +527,233 @@ button {
 
 .options-bar {
   border-bottom: 3px dashed #aeceff4d;
+}
+
+.incombat-box {
+  z-index: 10;
+  position: fixed;
+  margin-top: 26px;
+  margin-left: 1280px;
+}
+
+.incombat-button {
+  position: absolute;
+  cursor: pointer;
+  user-select: none;
+  padding: 10px;
+  border-radius: 0 12px 12px 0;
+  border-width: 2px 2px 2px 0;
+  border-style: solid;
+  transition: 0.4s ease;
+  height: 56px;
+  width: 54px;
+  z-index: 20;
+  animation: breathLight 2s infinite linear;
+}
+
+@keyframes breathLight {
+  0% {
+    border-color: #fff67399;
+    box-shadow: 0 0 30px #fff673f6;
+    background-color: #fff67399;
+  }
+
+  50% {
+    border-color: #fff67333;
+    box-shadow: 0 0 30px #fff67333;
+    background-color: #fff67333;
+  }
+
+  100% {
+    border-color: #fff67399;
+    box-shadow: 0 0 30px #fff673f6;
+    background-color: #fff67399;
+  }
+}
+
+.incombat-button:hover {
+  border-color: yellow !important;
+  box-shadow: 0 0 30px yellow !important;
+  filter: brightness(1.1);
+}
+
+.incombat-button:active {
+  filter: brightness(0.8);
+}
+
+.incombat-button:active .incombat-button-image {
+  transform: scale(0.9);
+}
+
+.incombat-button-image {
+  height: 32px;
+  width: 32px;
+  transition: 0.2s ease;
+}
+
+.rorate-incombat-button {
+  width: 190px;
+  border-bottom-right-radius: 0;
+}
+
+.rorate-incombat-button .incombat-button-image {
+  transform: rotate(45deg);
+}
+
+.incombat-content {
+  background-color: #ffffff33;
+  width: 0px;
+  height: 550px;
+  position: absolute;
+  z-index: 15;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: 0.3s ease;
+  overflow: hidden;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 20px 0 20px #0000001a;
+  backdrop-filter: blur(4px);
+}
+
+.show-incombat-content {
+  width: 190px;
+  opacity: 1;
+}
+
+.incombat-title {
+  user-select: none;
+  font-weight: bold;
+  line-height: 56px;
+  padding-left: 34px;
+  text-align: center;
+  vertical-align: middle;
+  color: #00367f;
+  font-size: 14px;
+}
+
+.incombat-content-raw {
+  width: 190px;
+}
+
+.incombat-arena-box {
+  overflow-y: scroll;
+  height: calc(550px - 56px);
+  padding: 8px;
+}
+
+.incombat-button-bulb {
+  position: absolute;
+  right: -15px;
+  top: -10px;
+  border-radius: 15px;
+  padding: 2px 6px;
+  background-color: red;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffffff;
+  transition: 0.2s ease;
+  overflow: hidden;
+  opacity: 0.9;
+}
+
+.hide-bulb {
+  opacity: 0;
+}
+
+.battle-console-box {
+  position: fixed;
+  bottom: 0;
+  width: 1280px;
+  padding: 10px 20px;
+  z-index: 25;
+  background-color: #ffffffb3;
+  backdrop-filter: blur(4px);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 0 30px #00000033;
+  transition: 0.4s ease;
+  /* border-width: 2px 2px 0 2px;
+  border-style: solid;
+  border-color: #000000; */
+}
+
+.battle-console-box-fold {
+  height: 50px;
+}
+
+.battle-console-box-unfold {
+  height: 260px;
+}
+
+.battle-console-head {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  text-shadow: 0 0 12px #00000033;
+  transition: 0.2s ease;
+}
+
+.battle-console-head:hover {
+  text-shadow: 0 0 22px #000000;
+}
+
+.battle-console-icon {
+  transition: transform 0.4s ease;
+}
+
+.rotate-battle-console-icon {
+  transform: rotate(180deg);
+}
+
+.battle-console-bulb {
+  background-color: red;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 16px;
+  padding: 2px 8px;
+}
+
+.battle-console-content {
+  margin: 10px 8px;
+  overflow: auto;
+  height: calc(260px - 70px);
+}
+
+.battle-record-line {
+  display: flex;
+  padding: 2px 0;
+  text-shadow: 0 0 12px #00000066;
+}
+
+.battle-record-id {
+  height: 22px;
+  line-height: 22px;
+  font-size: 12px;
+  border-radius: 12px;
+  padding: 0px 10px;
+  margin-right: 5px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.rare-green {
+  background-color: #01ba96;
+}
+
+.rare-grey {
+  background-color: #99a3a4;
+}
+
+.battle-record-time {
+  padding: 0 6px;
+  font-weight: bold;
+  min-width: 80px;
 }
 </style>
