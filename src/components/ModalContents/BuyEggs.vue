@@ -113,9 +113,9 @@
 </template>
 
 <script>
-import { NullsEggManager } from '@/contracts'
+import { NullsEggManager, CONTRACT_ADDRESS } from '@/contracts'
 import { BigNumber } from 'ethers'
-import { addDecimal, formatNumber, removeDecimal, guid } from '@/utils/common'
+import { addDecimal, formatNumber, removeDecimal, guid, calcApproveAmount } from '@/utils/common'
 
 import { LoadingOutlined } from '@ant-design/icons-vue';
 import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
@@ -184,24 +184,24 @@ export default {
     tokenAddress() {
       return this.currentToken.address
     },
-    tokenDecimals() {
+    tokenDecimal() {
       return this.contractTokenDecimal || this.currentToken.decimal
     }
   },
   methods: {
     async updateBalance() {
-      this.tokenBalance = removeDecimal(await this.tokenContract['balanceOf'](this.wallet.address), this.tokenDecimals)
+      this.tokenBalance = removeDecimal(await this.tokenContract['balanceOf'](this.wallet.address), this.tokenDecimal)
     },
     select(key) {
       this.selected = key
     },
-    subscribeToken() {
+    async subscribeToken() {
       this.tokenContract = this.wallet.createERC20(this.tokenAddress)
 
       // Get decimals
-      this.tokenContract['decimals']().then(d => {
-        this.contractTokenDecimal = d
-      })
+      this.contractTokenDecimal = await this.tokenContract['decimals']()
+      // Get unitPrice
+      this.unitPrice = removeDecimal(await this.eggManagerContract['getPrice'](this.tokenAddress), this.contractTokenDecimal)
 
       clearInterval(this.updateBalanceInterval)
       this.updateBalance().then(() => {
@@ -218,21 +218,20 @@ export default {
       const TIPS_KEY = `buyEggs-${guid()}`
       const title = (t) => `BuyEggs: ${t}`
 
-
       // Check allowance
-      const ALLOWANCE = BigNumber.from(1_000_000_000)
-      const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsEggManager.address)
+      const ALLOWANCE = calcApproveAmount(this.tokenDecimal)
+      const allowance = await this.tokenContract['allowance'](this.wallet.address, CONTRACT_ADDRESS.TransferProxy)
 
 
       // GasLimit
       /* const needGasLimit = !!tokenContract.signer
       if (needGasLimit) {
-        const gasLimit = await tokenContract.estimateGas['approve'](utils.getAddress(NullsEggManager.address), this.totalPrice, {})
+        const gasLimit = await tokenContract.estimateGas['approve'](utils.getAddress(CONTRACT_ADDRESS.TransferProxy), this.totalPrice, {})
       } */
 
 
       // Approve if need
-      if (allowance < ALLOWANCE) {
+      if (allowance.lt(ALLOWANCE)) {
         this.approving = true
         this.$notification.open({
           message: title('Approving Required ❗'),
@@ -240,9 +239,9 @@ export default {
           duration: 0,
           key: TIPS_KEY
         })
-        const approveAmount = addDecimal(ALLOWANCE, this.decimals).toString()
+        const approveAmount = addDecimal(ALLOWANCE, this.tokenDecimal).toString()
         try {
-          const approveTx = await this.tokenContract['approve'](NullsEggManager.address, approveAmount)
+          const approveTx = await this.tokenContract['approve'](CONTRACT_ADDRESS.TransferProxy, approveAmount)
           this.$notification.open({
             message: title('Waiting for Approving...'),
             description: WALLET_TIPS.txSend,
@@ -271,6 +270,7 @@ export default {
             key: TIPS_KEY
           })
           this.approving = false
+          return
         }
       }
 
@@ -307,7 +307,7 @@ export default {
       } catch (err) {
         console.error(err)
         this.$notification.open({
-          message: title('Approving failed ❌'),
+          message: title('Purchasing failed ❌'),
           description: WALLET_ERRORS[err.code] || err.data?.message || err.message,
           duration: 2,
           key: TIPS_KEY
