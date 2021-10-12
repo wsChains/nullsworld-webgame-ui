@@ -102,7 +102,7 @@
 </template>
 
 <script>
-import { NullsEggToken, NullsEggManager, RingManager } from '@/contracts'
+import { NullsEggToken, NullsEggManager, NullsRankManager } from '@/contracts'
 import { BigNumber, utils } from 'ethers'
 import { addDecimal, formatNumber, removeDecimal, calcColor } from '@/utils/common'
 import { MyEggs, Ring } from '@/backends'
@@ -155,7 +155,7 @@ export default {
     // Create contracts
     this.eggContract = this.wallet.createContract(NullsEggToken)
     this.eggManagerContract = this.wallet.createContract(NullsEggManager)
-    this.ringManagerContract = this.wallet.createContract(RingManager)
+    this.ringManagerContract = this.wallet.createContract(NullsRankManager)
 
 
     this.subscribeToken()
@@ -216,7 +216,7 @@ export default {
 
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000_000)
-      const allowance = await this.tokenContract['allowance'](this.wallet.address, RingManager.address)
+      const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsRankManager.address)
 
       // Approve if need
       if (allowance < ALLOWANCE) {
@@ -224,7 +224,7 @@ export default {
         let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
         const approveAmount = addDecimal(ALLOWANCE, this.usdtDecimals).toString()
         try {
-          const approveTx = await this.tokenContract['approve'](RingManager.address, approveAmount)
+          const approveTx = await this.tokenContract['approve'](NullsRankManager.address, approveAmount)
           hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
           await approveTx.wait().then(receipt => {
             console.log(receipt)

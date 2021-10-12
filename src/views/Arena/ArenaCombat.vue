@@ -114,7 +114,7 @@
 <script>
 import { Ring } from '@/backends'
 import { removeDecimal, formatNumber, formatDate, addDecimal, guid, calcArenaImage, calcNullsImage } from '@/utils/common'
-import { RingManager, ERC20 } from '@/contracts'
+import { NullsRankManager, ERC20 } from '@/contracts'
 import { CheckCircleTwoTone, SyncOutlined, CloseCircleTwoTone } from '@ant-design/icons-vue'
 import { h } from 'vue'
 import { BigNumber } from 'ethers'
@@ -147,7 +147,7 @@ export default {
         this.getRingData()
 
         // Create contracts
-        this.ringManagerContract = this.wallet.createContract(RingManager)
+        this.ringManagerContract = this.wallet.createContract(NullsRankManager)
 
         this.tokenAddress = ERC20.getAddress(this.tokenSymbol)
         this.tokenContract = this.wallet.createERC20(this.tokenAddress)
@@ -188,7 +188,7 @@ export default {
 
             // Check allowance
             const ALLOWANCE = BigNumber.from(1_000_000_000_000)
-            const allowance = await this.tokenContract['allowance'](this.wallet.address, RingManager.address)
+            const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsRankManager.address)
 
             // Approve if need
             if (allowance < ALLOWANCE) {
@@ -196,7 +196,7 @@ export default {
                 let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
                 const approveAmount = addDecimal(ALLOWANCE, this.usdtDecimals).toString()
                 try {
-                    const approveTx = await this.tokenContract['approve'](RingManager.address, approveAmount)
+                    const approveTx = await this.tokenContract['approve'](NullsRankManager.address, approveAmount)
                     hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
                     await approveTx.wait().then(receipt => {
                         console.log(receipt)

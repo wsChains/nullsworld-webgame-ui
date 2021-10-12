@@ -75,7 +75,7 @@ import Nulls from '@/components/Items/NullsItem.vue'
 import NoNulls from '@/components/Items/NoNulls.vue'
 import { SyncOutlined } from '@ant-design/icons-vue'
 import { BigNumber } from 'ethers'
-import { RingManager } from '@/contracts'
+import { NullsRankManager } from '@/contracts'
 import { WALLET_TIPS } from '@/utils/wallet/constants'
 
 
@@ -122,7 +122,7 @@ export default {
       if (!this.wallet.connected) return
       clearInterval(this.updateDataInterval)
 
-      this.ringManagerContract = this.wallet.createContract(RingManager)
+      this.ringManagerContract = this.wallet.createContract(NullsRankManager)
       this.tokenContract = this.wallet.createERC20(this.arena?.token)
 
 
@@ -167,7 +167,7 @@ export default {
 
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000_000)
-      const allowance = await this.tokenContract['allowance'](this.wallet.address, RingManager.address)
+      const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsRankManager.address)
 
       // Approve if need
       if (allowance < ALLOWANCE) {
@@ -180,7 +180,7 @@ export default {
         })
         const approveAmount = addDecimal(ALLOWANCE, this.arena.token_precision).toString()
         try {
-          const approveTx = await this.tokenContract['approve'](RingManager.address, approveAmount)
+          const approveTx = await this.tokenContract['approve'](NullsRankManager.address, approveAmount)
           this.$notification.open({
             message: title('Waiting for Approving...'),
             description: WALLET_TIPS.txSend,
