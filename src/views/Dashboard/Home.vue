@@ -13,10 +13,11 @@ import RecentCombat from '@/components/Dashboard/RecentCombat.vue'
 
 export default {
   components: {
-    StatisticCard, RecentTrading, RecentCombat
+    StatisticCard,
+    RecentTrading,
+    RecentCombat
   }
 }
-
 </script>
 
 <style scoped>

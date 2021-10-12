@@ -2,7 +2,9 @@
   <a-spin tip="Loading..." :spinning="approving || hatching">
     <div class="eggs-container">
       <div class="eggs-title">Hatch eggs</div>
-      <div class="eggs-introduce">nulls will treat the first person they see as a parent</div>
+      <div class="eggs-introduce">
+        nulls will treat the first person they see as a parent
+      </div>
       <NeedWalletConnect
         @onWalletConnect="init"
         @onAddressChange="init"
@@ -20,29 +22,60 @@
           </div>
         </div>
 
-        <div class="flex justify-center items-center mt-8">
-          <input
-            v-model="quantity"
-            oninput="value=Number(value.replace(/[^\d]/g, '')); if(value>20)value=20"
-            type="text"
-            class="quantity-input focus:outline-none focus:shadow-outline"
-            :style="approving || hatching ? 'pointer-events: none' : ''"
-            placeholder="Quantity (Max 20)"
-          />
+        <div class="egg-count-wrap mt-8">
+          <p class="title">Number of dinosaur eggs (default: 1)</p>
+          <div class="flex egg-count-inner">
+            <div class="flex" @click="handleClickQuantity">
+              <span
+                :class="{
+                  active: !isInputQuantity && openEggAmount == quantityItem.label
+                }"
+                v-for="quantityItem in quantityList"
+                :key="quantityItem.label"
+                >{{ quantityItem.label }}</span
+              >
+            </div>
+            <input
+              v-model="quantity"
+              @focus="isInputQuantity = true"
+              @blur="quantity === '' && (isInputQuantity = false)"
+              @input="quantityChange"
+              type="text"
+              :class="[
+                'quantity-input',
+                'focus:outline-none',
+                'focus:shadow-outline',
+                { active: isInputQuantity }
+              ]"
+              :style="approving || hatching ? 'pointer-events: none' : ''"
+              placeholder="other"
+            />
+          </div>
         </div>
         <div class="flex justify-center mt-8">
           <color-button
             @click="handleHatch"
-            :disabled="!wallet.connected || zeroEggs || insufficientEggs || approving || hatching"
+            :disabled="
+              !wallet.connected || zeroEggs || insufficientEggs || approving || hatching
+            "
           >
-            <LoadingOutlined v-show="approving || hatching" class="px-2 font-bold" spin />
+            <LoadingOutlined
+              v-show="approving || hatching"
+              class="px-2 font-bold"
+              spin
+            />
             {{
-              !wallet.connected ? 'Wallet Not Connected' :
-                insufficientEggs ? 'Insufficient Eggs' :
-                  zeroEggs ? 'Number of eggs cannot be 0' :
-                    approving ? 'Approving...' :
-                      hatching ? 'Hatching...' :
-                        `Hatch ${openEggAmount} Eggs`
+              !wallet.connected
+                ? 'Wallet Not Connected'
+                : insufficientEggs
+                ? 'Insufficient Eggs'
+                : zeroEggs
+                ? 'Number of eggs cannot be 0'
+                : approving
+                ? 'Approving...'
+                : hatching
+                ? 'Hatching...'
+                : `Hatch ${openEggAmount} Eggs`
             }}
           </color-button>
         </div>
@@ -60,14 +93,15 @@ import { h } from 'vue'
 import { CheckCircleTwoTone, LoadingOutlined } from '@ant-design/icons-vue'
 import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
 
-
 export default {
   components: {
     LoadingOutlined
   },
   data() {
     return {
-      addDecimal, formatNumber, removeDecimal,
+      addDecimal,
+      formatNumber,
+      removeDecimal,
       maxOpen: 20,
       selected: '0',
       width: '287px',
@@ -77,7 +111,8 @@ export default {
         }
       ],
 
-      quantity: undefined,
+      quantity: '',
+      isInputQuantity: false,
       hatching: false,
       approving: false,
       openEggAmount: 1,
@@ -85,7 +120,7 @@ export default {
       eggBalance: 0,
       eggContract: undefined,
       eggManagerContract: undefined,
-      updateBalanceInterval: undefined,
+      updateBalanceInterval: undefined
     }
   },
   async created() {
@@ -102,10 +137,26 @@ export default {
   },
   computed: {
     insufficientEggs() {
-      return !this.eggBalance || (this.openEggAmount > this.eggBalance)
+      return !this.eggBalance || this.openEggAmount > this.eggBalance
     },
     zeroEggs() {
       return this.openEggAmount < 1
+    },
+    quantityList() {
+      return [
+        {
+          label: 1
+        },
+        {
+          label: 5
+        },
+        {
+          label: 10
+        },
+        {
+          label: 20
+        }
+      ]
     }
   },
   methods: {
@@ -116,7 +167,6 @@ export default {
       // Create contracts
       this.eggContract = this.wallet.createContract(NullsEggToken)
       this.eggManagerContract = this.wallet.createContract(NullsEggManager)
-
 
       await this.updateEggBalance()
       this.updateBalanceInterval = setInterval(this.updateEggBalance, 10_000)
@@ -136,23 +186,41 @@ export default {
       if (code !== 200) {
         return { err: 'Could not get itemId, please try again.' }
       }
-      return { itemId: data.item_id, deadline: latestBlock.timestamp + 1800, err: undefined }
+      return {
+        itemId: data.item_id,
+        deadline: latestBlock.timestamp + 1800,
+        err: undefined
+      }
     },
     async handleHatch() {
       if (!this.eggBalance) return
 
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000)
-      const allowance = await this.eggContract['allowance'](this.wallet.address, NullsEggManager.address)
+      const allowance = await this.eggContract['allowance'](
+        this.wallet.address,
+        NullsEggManager.address
+      )
 
       // Approve if need
       if (allowance < ALLOWANCE) {
         this.approving = true
-        let hiedeApprovingHint = this.$message.loading({ content: 'Approving required, waiting for your approval', key: 'approving', duration: 0 })
+        let hiedeApprovingHint = this.$message.loading({
+          content: 'Approving required, waiting for your approval',
+          key: 'approving',
+          duration: 0
+        })
         try {
-          const approveTx = await this.eggContract['approve'](NullsEggManager.address, ALLOWANCE)
-          hiedeApprovingHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'approving', duration: 0 })
-          await approveTx.wait().then(receipt => {
+          const approveTx = await this.eggContract['approve'](
+            NullsEggManager.address,
+            ALLOWANCE
+          )
+          hiedeApprovingHint = this.$message.loading({
+            content: WALLET_TIPS.txSend,
+            key: 'approving',
+            duration: 0
+          })
+          await approveTx.wait().then((receipt) => {
             console.log(receipt)
             if (receipt.status === 1) {
               console.log(`================approveTx=================`)
@@ -164,7 +232,9 @@ export default {
         } catch (err) {
           hiedeApprovingHint()
           console.error(err)
-          this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
+          this.$message.error(
+            WALLET_ERRORS[err.code] || err.data?.message || err.message
+          )
           this.approving = false
         }
       }
@@ -174,12 +244,24 @@ export default {
       if (err) return this.$message.error(err)
 
       // Hatch
-      let hideOpeningHint = this.$message.loading({ content: 'Awaiting approval of transaction', key: 'hatching', duration: 0 })
+      let hideOpeningHint = this.$message.loading({
+        content: 'Awaiting approval of transaction',
+        key: 'hatching',
+        duration: 0
+      })
       this.hatching = true
       try {
-        const openEggsTx = await this.eggManagerContract['openMultiple'](this.openEggAmount, itemId, deadline)
-        hideOpeningHint = this.$message.loading({ content: WALLET_TIPS.txSend, key: 'hatching', duration: 0 })
-        await openEggsTx.wait().then(receipt => {
+        const openEggsTx = await this.eggManagerContract['openMultiple'](
+          this.openEggAmount,
+          itemId,
+          deadline
+        )
+        hideOpeningHint = this.$message.loading({
+          content: WALLET_TIPS.txSend,
+          key: 'hatching',
+          duration: 0
+        })
+        await openEggsTx.wait().then((receipt) => {
           console.log(receipt)
           if (receipt.status === 1) {
             console.log(`===============openEggsTx==================`)
@@ -189,7 +271,7 @@ export default {
             this.$notification.open({
               message: 'Successful hatching',
               description: `Successful hatching of ${this.openEggAmount} eggs, please check in MyNulls!`,
-              icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' }),
+              icon: h(CheckCircleTwoTone, { twoToneColor: '#52c41a' })
             })
           }
         })
@@ -199,13 +281,22 @@ export default {
         this.$message.error(WALLET_ERRORS[err.code] || err.data?.message || err.message)
         this.hatching = false
       }
+    },
+    quantityChange() {
+      let value = this.quantity.replace(/[^\d]/g, '')
+      this.quantity = +value > 20 ? '20' : value
+    },
+    handleClickQuantity(e) {
+      if (e.target.tagName.toLowerCase() === 'span') {
+        this.isInputQuantity = false
+        this.openEggAmount = e.target.innerText
+      }
     }
   }
 }
 </script>
 
-
-<style scoped>
+<style lang="less" scoped>
 .eggs-container {
   padding: 20px 40px;
 }
@@ -302,15 +393,47 @@ export default {
   color: #ff7427;
 }
 
-.quantity-input {
-  padding: 8px 16px;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 8px;
-  border: 2px solid #c4c3c3;
-  background: transparent;
-  width: 300px;
-  margin-right: 20px;
-  text-align: center;
+.egg-count-wrap {
+  .title {
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #00367f;
+  }
+
+  .egg-count-inner {
+    span {
+      margin-right: 25px;
+      width: 57px;
+      height: 34px;
+      line-height: 34px;
+      color: #111;
+      font-size: 18px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      cursor: pointer;
+
+      &.active {
+        color: #ff7427;
+        border-color: #ff7427;
+      }
+    }
+
+    .quantity-input {
+      width: 57px;
+      height: 34px;
+      padding: 5px 10px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      background: transparent;
+      text-align: center;
+
+      &.active {
+        color: #ff7427;
+        border-color: #ff7427;
+      }
+    }
+  }
 }
 </style>
