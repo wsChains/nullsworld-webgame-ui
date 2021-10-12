@@ -3,7 +3,7 @@
     <top-navbar />
     <main-content />
     <footer-bar />
-    <custom-modal v-model="showModal" :click-to-close="clickToClose">
+    <custom-modal @close="closeGlobalModal" v-model="showModal" :click-to-close="clickToClose">
       <Help v-if="contentSwitcher('help')" />
       <BuyEggs key="GlobalModal-BuyEggs" v-else-if="contentSwitcher('buyEggs')" />
       <OpenEggs key="GlobalModal-OpenEggs" v-else-if="contentSwitcher('hatchEggs')" />

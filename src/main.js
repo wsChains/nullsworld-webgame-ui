@@ -1,7 +1,7 @@
 // Functions
 import { createApp, markRaw, computed } from 'vue'
 import { newRouter } from '@/router'
-import i18n from '@/locales' 
+import i18n from '@/locales'
 import { createPinia } from 'pinia'
 import mitt from 'mitt'
 import { axios } from '@/backends/base'

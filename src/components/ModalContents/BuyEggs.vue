@@ -10,16 +10,19 @@
         <div class="arena-title">Buy Eggs</div>
         <div class="arena-introduce">Select an Egg to purchase</div>
         <div class="pt-12 pb-6">
-          <div class="py-2 font-bold" style="font-size: 16px;">Token select</div>
+          <div class="py-2 font-bold" style="font-size: 16px">Token select</div>
           <a-dropdown :trigger="['click']" placement="bottomCenter">
             <div class="token-select">
               <div class="token-select-left">
-                <img class="token-icon" :src="`/tokens/${tokenSymbol.toLowerCase()}.svg`" />
+                <img
+                  class="token-icon"
+                  :src="`/tokens/${tokenSymbol.toLowerCase()}.svg`"
+                />
                 <div class="token-select-content">
                   <div class="token-symbol">{{ tokenSymbol }}</div>
-                  <div
-                    class="token-select-balance"
-                  >Balance: {{ formatNumber(tokenBalance) }} {{ tokenSymbol }}</div>
+                  <div class="token-select-balance">
+                    Balance: {{ formatNumber(tokenBalance) }} {{ tokenSymbol }}
+                  </div>
                 </div>
               </div>
               <div>
@@ -39,12 +42,19 @@
             </div>
             <template #overlay>
               <div class="select-token-dropdown">
-                <li v-for="(t, idx) in tokens" :key="t.address" @click="selectToken(idx)">
+                <li
+                  v-for="(t, idx) in tokens"
+                  :key="t.address"
+                  @click="selectToken(idx)"
+                >
                   <div class="flex">
-                    <img class="token-icon" :src="`/tokens/${t.symbol.toLowerCase()}.svg`" />
+                    <img
+                      class="token-icon"
+                      :src="`/tokens/${t.symbol.toLowerCase()}.svg`"
+                    />
                     <div>
                       <div class="font-bold">{{ t.symbol }}</div>
-                      <div style="font-size: 12px;">{{ t.address }}</div>
+                      <div style="font-size: 12px">{{ t.address }}</div>
                     </div>
                   </div>
                 </li>
@@ -53,20 +63,43 @@
           </a-dropdown>
         </div>
         <div>
-          <div class="py-2 font-bold" style="font-size: 16px;">Eggs quantity (Default: 1)</div>
-          <input
-            v-model="quantity"
-            oninput="value=value.replace(/[^\d]/g,'')"
-            type="text"
-            class="quantity-input focus:outline-none focus:shadow-outline"
-            :style="approving || purchasing ? 'pointer-events: none' : ''"
-            placeholder="Eggs quantity"
-          />
+          <div class="py-2 font-bold" style="font-size: 16px">
+            Eggs quantity (Default: 1)
+          </div>
+
+          <div class="flex egg-count-inner">
+            <div class="flex" @click="handleClickQuantity">
+              <span
+                :class="{
+                  active: !isInputQuantity && buyEggAmount == quantityItem.label
+                }"
+                v-for="quantityItem in quantityList"
+                :key="quantityItem.label"
+                >{{ quantityItem.label }}</span
+              >
+            </div>
+
+            <input
+              v-model="quantity"
+              @focus="isInputQuantity = true"
+              @blur="quantity === '' && (isInputQuantity = false)"
+              @input="quantity = quantity.replace(/[^\d]/g, '')"
+              type="text"
+              :class="[
+                'quantity-input',
+                'focus:outline-none',
+                'focus:shadow-outline',
+                { active: isInputQuantity }
+              ]"
+              :style="approving || purchasing ? 'pointer-events: none' : ''"
+              placeholder="other"
+            />
+          </div>
         </div>
 
         <div class="form-column mt-6">
           <div>1 Eggs price</div>
-          <div class="px-4 font-bold" style="color: #ff761a;">
+          <div class="px-4 font-bold" style="color: #ff761a">
             <span class="px-2">{{ unitPrice }}</span>
             <span>{{ tokenSymbol }}</span>
           </div>
@@ -74,7 +107,7 @@
 
         <div class="form-column">
           <div>Balance</div>
-          <div class="px-4 font-bold" style="color: #ff761a;">
+          <div class="px-4 font-bold" style="color: #ff761a">
             <span class="px-2">{{ formatNumber(tokenBalance) }}</span>
             <span>{{ tokenSymbol }}</span>
           </div>
@@ -82,12 +115,12 @@
 
         <div class="form-column">
           <div>Buy Eggs</div>
-          <div class="px-4 font-bold" style="color: #ff761a;">{{ eggAmount }}</div>
+          <div class="px-4 font-bold" style="color: #ff761a">{{ buyEggAmount }}</div>
         </div>
 
         <div class="form-column">
           <div>Total Price</div>
-          <div class="px-4 font-bold" style="color: #ff761a;">
+          <div class="px-4 font-bold" style="color: #ff761a">
             <span class="px-2">{{ formatNumber(totalPrice) }}</span>
             <span>{{ tokenSymbol }}</span>
           </div>
@@ -95,15 +128,27 @@
         <div class="flex justify-center mt-12">
           <color-button
             @click="handlePurchase"
-            :disabled="!wallet.connected || insufficientBalance || approving || purchasing"
+            :disabled="
+              !wallet.connected || insufficientBalance || approving || purchasing
+            "
           >
-            <LoadingOutlined v-show="approving || purchasing" class="px-2 font-bold" spin />
+            <LoadingOutlined
+              v-show="approving || purchasing"
+              class="px-2 font-bold"
+              spin
+            />
             {{
-              !wallet.connected ? 'Wallet Not Connected' :
-                insufficientBalance ? `Insufficient ${tokenSymbol} Balance` :
-                  approving ? 'Approving...' :
-                    purchasing ? 'purchasing...' :
-                      `Purchase ${eggAmount} Eggs With ${formatNumber(totalPrice)} ${tokenSymbol}`
+              !wallet.connected
+                ? 'Wallet Not Connected'
+                : insufficientBalance
+                ? `Insufficient ${tokenSymbol} Balance`
+                : approving
+                ? 'Approving...'
+                : purchasing
+                ? 'purchasing...'
+                : `Purchase ${eggAmount} Eggs With ${formatNumber(
+                    totalPrice
+                  )} ${tokenSymbol}`
             }}
           </color-button>
         </div>
@@ -117,9 +162,8 @@ import { NullsEggManager } from '@/contracts'
 import { BigNumber } from 'ethers'
 import { addDecimal, formatNumber, removeDecimal, guid } from '@/utils/common'
 
-import { LoadingOutlined } from '@ant-design/icons-vue';
+import { LoadingOutlined } from '@ant-design/icons-vue'
 import { WALLET_ERRORS, WALLET_TIPS } from '@/utils/wallet/constants'
-
 
 export default {
   components: {
@@ -127,10 +171,14 @@ export default {
   },
   data() {
     return {
-      addDecimal, formatNumber, removeDecimal,
+      addDecimal,
+      formatNumber,
+      removeDecimal,
       totalPrice: 1,
       unitPrice: 1,
-      quantity: undefined,
+      quantity: '',
+      isInputQuantity: false,
+      buyEggAmount: 1,
       approving: false,
       purchasing: false,
 
@@ -165,6 +213,11 @@ export default {
   },
   watch: {
     quantity(newVal) {
+      let value = newVal.replace(/[^\d]/g, '') || 1
+      this.totalPrice = this.unitPrice * value
+      this.buyEggAmount = value + ''
+    },
+    buyEggAmount(newVal) {
       this.totalPrice = this.unitPrice * (newVal.replace(/[^\d]/g, '') || 1)
     }
   },
@@ -186,11 +239,30 @@ export default {
     },
     tokenDecimals() {
       return this.contractTokenDecimal || this.currentToken.decimal
+    },
+    quantityList() {
+      return [
+        {
+          label: 1
+        },
+        {
+          label: 5
+        },
+        {
+          label: 10
+        },
+        {
+          label: 20
+        }
+      ]
     }
   },
   methods: {
     async updateBalance() {
-      this.tokenBalance = removeDecimal(await this.tokenContract['balanceOf'](this.wallet.address), this.tokenDecimals)
+      this.tokenBalance = removeDecimal(
+        await this.tokenContract['balanceOf'](this.wallet.address),
+        this.tokenDecimals
+      )
     },
     select(key) {
       this.selected = key
@@ -199,13 +271,13 @@ export default {
       this.tokenContract = this.wallet.createERC20(this.tokenAddress)
 
       // Get decimals
-      this.tokenContract['decimals']().then(d => {
+      this.tokenContract['decimals']().then((d) => {
         this.contractTokenDecimal = d
       })
 
       clearInterval(this.updateBalanceInterval)
       this.updateBalance().then(() => {
-        this.updateBalanceInterval = setInterval(this.updateBalance, 10_000);
+        this.updateBalanceInterval = setInterval(this.updateBalance, 10_000)
       })
     },
     selectToken(idx) {
@@ -218,11 +290,12 @@ export default {
       const TIPS_KEY = `buyEggs-${guid()}`
       const title = (t) => `BuyEggs: ${t}`
 
-
       // Check allowance
       const ALLOWANCE = BigNumber.from(1_000_000_000)
-      const allowance = await this.tokenContract['allowance'](this.wallet.address, NullsEggManager.address)
-
+      const allowance = await this.tokenContract['allowance'](
+        this.wallet.address,
+        NullsEggManager.address
+      )
 
       // GasLimit
       /* const needGasLimit = !!tokenContract.signer
@@ -230,26 +303,29 @@ export default {
         const gasLimit = await tokenContract.estimateGas['approve'](utils.getAddress(NullsEggManager.address), this.totalPrice, {})
       } */
 
-
       // Approve if need
       if (allowance < ALLOWANCE) {
         this.approving = true
         this.$notification.open({
           message: title('Approving Required ❗'),
-          description: 'Your authorization is required to send the transaction, please go to your wallet to confirm...',
+          description:
+            'Your authorization is required to send the transaction, please go to your wallet to confirm...',
           duration: 0,
           key: TIPS_KEY
         })
         const approveAmount = addDecimal(ALLOWANCE, this.decimals).toString()
         try {
-          const approveTx = await this.tokenContract['approve'](NullsEggManager.address, approveAmount)
+          const approveTx = await this.tokenContract['approve'](
+            NullsEggManager.address,
+            approveAmount
+          )
           this.$notification.open({
             message: title('Waiting for Approving...'),
             description: WALLET_TIPS.txSend,
             duration: 0,
             key: TIPS_KEY
           })
-          await approveTx.wait().then(receipt => {
+          await approveTx.wait().then((receipt) => {
             console.log(receipt)
             if (receipt.status === 1) {
               console.log(`================approveTx=================`)
@@ -283,14 +359,17 @@ export default {
       })
       this.purchasing = true
       try {
-        const purchaseTx = await this.eggManagerContract['buy'](this.eggAmount, this.tokenAddress)
+        const purchaseTx = await this.eggManagerContract['buy'](
+          this.eggAmount,
+          this.tokenAddress
+        )
         this.$notification.open({
           message: title('Waiting for Purchasing result 📑'),
           description: WALLET_TIPS.txSend,
           duration: 0,
           key: TIPS_KEY
         })
-        await purchaseTx.wait().then(receipt => {
+        await purchaseTx.wait().then((receipt) => {
           console.log(receipt)
           if (receipt.status === 1) {
             console.log(`===============purchaseTx==================`)
@@ -314,13 +393,18 @@ export default {
         })
         this.purchasing = false
       }
+    },
+    handleClickQuantity(e) {
+      if (e.target.tagName.toLowerCase() === 'span') {
+        this.isInputQuantity = false
+        this.buyEggAmount = e.target.innerText
+      }
     }
   }
 }
 </script>
 
-
-<style scoped>
+<style lang="less" scoped>
 .eggs-frame {
   padding: 30px;
   border-radius: 10px;
@@ -495,5 +579,41 @@ export default {
   font-weight: bold;
   color: #111111;
   line-height: 40px;
+}
+
+.egg-count-inner {
+  span {
+    margin-right: 25px;
+    width: 57px;
+    height: 34px;
+    line-height: 34px;
+    color: #111;
+    font-size: 18px;
+    text-align: center;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    cursor: pointer;
+
+    &.active {
+      color: #ff7427;
+      border-color: #ff7427;
+    }
+  }
+
+  .quantity-input {
+    width: 57px;
+    height: 34px;
+    padding: 5px 10px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    background: transparent;
+    text-align: center;
+
+    &.active {
+      color: #ff7427;
+      border-color: #ff7427;
+    }
+  }
 }
 </style>

@@ -15,7 +15,7 @@
     </div>
     <button
       :class="[!closeable ? 'modal__close__disabled' : '', 'modal__close']"
-      @click="close"
+      @click="() => { $emit('close'); close()}"
     ></button>
   </vue-final-modal>
 </template>
