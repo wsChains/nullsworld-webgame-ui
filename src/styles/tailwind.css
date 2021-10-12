@@ -9,6 +9,10 @@ body {
 }
 
 
+svg {
+  display: inline-block;
+}
+
 img {
   position: relative;
   -webkit-user-drag: none;
@@ -31,6 +35,12 @@ img::after {
 #app {
   background: url('/background.png') no-repeat fixed;
   background-size: 100% 100%;
+}
+
+.glass-background {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(4px) brightness(1.2);
+  box-shadow: 0 0 100px #ffffff inset, 0 0 10px #ffffff66;
 }
 
 
@@ -111,7 +121,10 @@ img::after {
   display: flex;
   flex-direction: column;
   min-height: calc(100% - 56px);
-  background-color: rgba(255, 255, 255, 0.9);
+  /* background-color: rgba(255, 255, 255, 0.9); */
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px) brightness(1.1);
+  box-shadow: 0 0 100px #ffffff inset, 0 0 30px #ffffff66;
   border-radius: 0 16px 16px 16px;
 }
 

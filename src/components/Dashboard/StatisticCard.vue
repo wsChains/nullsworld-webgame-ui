@@ -124,7 +124,9 @@ export default {
 
 <style scoped>
 .card {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px) brightness(1.1);
+  box-shadow: 0 0 100px #ffffff inset, 0 0 30px #ffffff66;
   min-height: 207px;
 }
 

@@ -272,7 +272,6 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: calc(100% - 56px);
-  background-color: rgba(255, 255, 255, 0.9);
   border-radius: 16px;
 }
 
