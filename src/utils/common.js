@@ -1,11 +1,16 @@
 import moment from 'moment'
+import { BigNumber, BigNumberish } from 'ethers'
 
 export function cutEthAddress(address, bit = 6) {
   return address
     ? address.slice(0, bit) +
-        '...' +
-        address.slice(address.length - bit, address.length)
+    '...' +
+    address.slice(address.length - bit, address.length)
     : address
+}
+
+export function calcApproveAmount(decimal) {
+  return BigNumber.from(10).pow(decimal + 18)
 }
 
 export function calcNullsImage(nullsId) {
@@ -56,12 +61,16 @@ export function guid() {
   })
 }
 
+/** 
+ * @param {BigNumber} num
+ **/
 export function formatNumber(num, digits = 3) {
+  if (num?._isBigNumber) num = num.toNumber()
   return num
     ? num
-        .toFixed(digits)
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-        .replace('.000', '')
+      .toFixed(digits)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      .replace('.000', '')
     : '0'
 }
 
@@ -69,16 +78,31 @@ export function scaleRatio(img, { mw = null, mh = null }) {
   return Math.max(mw / img.width, mh / img.height)
 }
 
+/** 
+ * @param {BigNumberish} decimal
+ **/
 export function decimalMutipler(decimal) {
-  return decimal ? 10 ** decimal : 1
+  if (decimal === undefined || decimal === null) throw new Error('[decimalMutipler]: decimal is undefined')
+  if (!decimal?._isBigNumber) decimal = BigNumber.from(decimal)
+  return BigNumber.from(10).pow(decimal)
 }
 
+/** 
+ * @param {BigNumberish} originAmount
+ * @param {BigNumberish} decimal
+ **/
 export function addDecimal(originAmount, decimal) {
-  return originAmount * decimalMutipler(decimal)
+  if (!originAmount?._isBigNumber) originAmount = BigNumber.from(originAmount)
+  return originAmount.mul(decimalMutipler(decimal))
 }
 
+/** 
+ * @param {BigNumberish} originAmount
+ * @param {BigNumberish} decimal
+ **/
 export function removeDecimal(originAmount, decimal) {
-  return originAmount / decimalMutipler(decimal)
+  if (!originAmount?._isBigNumber) originAmount = BigNumber.from(originAmount)
+  return originAmount.div(decimalMutipler(decimal))
 }
 
 export function randint(min, max) {
@@ -101,7 +125,7 @@ export const getStore = (name) => {
   let result = window.localStorage.getItem(name)
   try {
     result = JSON.parse(result)
-  } catch (err) {}
+  } catch (err) { }
   if (result === null || result === undefined || result === '') {
     result = ''
   }
