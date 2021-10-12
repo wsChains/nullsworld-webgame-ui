@@ -1,6 +1,13 @@
 <template>
   <header>
-    <nav>
+    <nav class="relative">
+      <div
+        id="hight-light-arrow"
+        v-if="hightLightArrowLeft"
+        :style="`left: ${hightLightArrowLeft}px;`"
+      >
+        <img src="/hightLight.png" />
+      </div>
       <div class="container mx-auto" style="min-width: 1280px !important;">
         <div
           class="flex items-center justify-between flex-col md:flex-row"
@@ -11,16 +18,17 @@
               <img src="/logo-small.png" alt="Nulls-World" />
             </div>
             <div class="md:block">
-              <div class="ml-24 flex items-baseline space-x-4 justify-between">
-                <template v-for="item in imageNavItems" :key="`${item.name}-route`">
-                  <button
-                    :class="[$route.name === item.name ? 'current-route' : '', 'nav-button', 'with-font', 'nav-pop-button']"
-                    @click="navigateTo(item)"
-                  >
-                    <img class="nav-button-image" :src="`/${item.icon}@1x.png`" />
-                    <span class="px-3">{{ item.name }}</span>
-                  </button>
-                </template>
+              <div class="ml-24 flex items-center space-x-4 justify-between">
+                <button
+                  v-for="item in imageNavItems"
+                  :key="`${item.name}-route`"
+                  :class="[$route.name === item.name ? 'current-route' : '', 'nav-button', 'with-font', 'nav-pop-button']"
+                  @click="navigateTo(item)"
+                >
+                  <img class="nav-button-image" :src="`/${item.icon}@1x.png`" />
+                  <span class="px-3" :ref="`${item.name}-route`">{{ item.name }}</span>
+                </button>
+
                 <a-dropdown placement="bottomCenter">
                   <div
                     :class="[$route.path?.includes('profile') && $route.name !== 'MyEggs' ? 'current-route' : '', 'me']"
@@ -39,7 +47,10 @@
                         clip-rule="evenodd"
                       />
                     </svg>
-                    <span class="username">{{ wallet.cuttedAddress || 'No Wallet' }}</span>
+                    <span
+                      class="username"
+                      ref="me-route"
+                    >{{ wallet.cuttedAddress || 'No Wallet Connect' }}</span>
                     <!-- <svg
                     xmlns="http://www.w3.org/2000/svg"
                     style="height: 24px; margin-left: 2px"
@@ -71,7 +82,7 @@
                 :class="[$route.name === 'MyEggs' ? 'current-route' : '', 'nav-button-vertical', 'nav-pop-button']"
               >
                 <img class="nav-button-image" src="/eggs-kira.png" />
-                <span class="px-2">EGGS</span>
+                <span class="px-2" ref="MyEggs-route">EGGS</span>
               </button>
               <button
                 @click="$root.openGlobalModal('help')"
@@ -83,8 +94,9 @@
               <div class="connect-wallet">
                 <color-button
                   @click="$root.openGlobalModal('walletConnect')"
-                  :buttonStyle="wallet.connected ? wallet.isCorrectNetwork ? 'orange' : 'red' : 'orange'"
-                >{{ wallet.connected ? wallet.isCorrectNetwork ? 'Connected' : 'Wrong Network' : 'Wallet' }}</color-button>
+                  style="width: 145px; font-size: 12px;"
+                  :buttonStyle="wallet.connected ? wallet.isCorrectNetwork ? 'yellow' : 'red' : 'orange'"
+                >{{ wallet.connected ? wallet.isCorrectNetwork ? 'Connected' : 'Wrong Network' : 'Connect to Wallet' }}</color-button>
               </div>
             </div>
           </div>
@@ -104,8 +116,21 @@ export default {
   components: {
     BuyEggs, Help, WalletConnect, CustomModal
   },
+  watch: {
+    '$route.name': function (newVal) {
+      if (this.menuItems.find(i => i.name === newVal)) newVal = 'me'
+      const dom = this.$refs[`${newVal}-route`]
+      if (dom) this.routeDom = dom
+      this.updateArrowPosition()
+    }
+  },
+  mounted() {
+    window.addEventListener('resize', this.updateArrowPosition)
+  },
   data() {
     return {
+      routeDom: undefined,
+      hightLightArrowLeft: undefined,
       imageNavItems: [
         {
           name: 'Home',
@@ -141,6 +166,14 @@ export default {
     navigateTo(navItem) {
       navItem &&
         this.$router.push({ name: navItem.name, params: navItem.defaultParams || {} })
+    },
+    updateArrowPosition() {
+      if (this.routeDom) {
+        this.$nextTick(() => {
+          const { left } = this.routeDom.getBoundingClientRect()
+          this.hightLightArrowLeft = this.$route.name === 'MyEggs' ? left + 8 : left + 16
+        })
+      }
     }
   }
 }
@@ -232,7 +265,7 @@ button {
 }
 
 .me {
-  display: flex;
+  overflow: hidden;
   justify-content: center;
   align-items: center;
   font-size: 18px;
@@ -264,6 +297,8 @@ button {
 }
 
 .username {
+  display: inline-block;
+  min-width: 125px;
   margin-left: 8px;
   font-size: 14px;
   font-weight: bold;
@@ -277,5 +312,17 @@ button {
   font-size: 14px;
   font-weight: 500;
   color: #ffffff;
+}
+
+#hight-light-arrow {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  transition: 0.2s ease;
+}
+
+#hight-light-arrow img {
+  transform: rotate(180deg);
+  width: 32px;
 }
 </style>
