@@ -3,10 +3,9 @@ import _ERC20 from './abi/ERC20.json'
 // Nulls
 import _NullsEggManager from './abi/NullsEggManager.json'
 import _NullsEggToken from './abi/NullsEggToken.json'
-import _RingManager from './abi/RingManager.json'
+import _NullsRankManager from './abi/NullsRankManager.json'
 import _NullsWorldCore from './abi/NullsWorldCore.json'
 import _NullsPetToken from './abi/NullsPetToken.json'
-import _NullsWorldMarket from './abi/NullsWorldMarket.json'
 
 
 const contractAbiWithAddress = (name) => {
@@ -23,21 +22,18 @@ export const CONTRACTS = {
     _ERC20,
     _NullsEggManager,
     _NullsEggToken,
-    _RingManager,
+    _NullsRankManager,
     _NullsWorldCore,
-    _NullsPetToken,
-    _NullsWorldMarket
+    _NullsPetToken
 }
 
 export const CONTRACT_ADDRESS = {
-    Router: '0x54065295d6f42e945A0E46D230DE88A1f55fBd0F',
-    Storage: '0xf21B139797Bb5b703C18df6603864096091D2535',
-    NullsEggToken: '0x21782523b5C6b7Cd00A284351af9C3C4cfDecB1e',
-    NullsWorldCore: '0x23B08841ceE1f55e92A3e0F46c045740EbE46D2d',
-    NullsEggManager: '0x2Eeba75b34376e314756eDea782657E79272fa3E',
-    RingManager: '0x8dfe673f166cCF27B9BfE05B79803Cf8b05DF2D9',
-    NullsPetToken: '0x6c8740fd77692FBce3c9A9813B8F9bBC89aaC928',
-    NullsWorldMarket: '0xF21432E33C6BB6AF1730063f2c963eb5Ca5926D7'
+    NullsEggManager: '0x78167ba6D8BaAA3e9999177fCa5f08770EE37308',
+    NullsEggToken: '0x808034B5c22ED18Efc9325B2729181E4fC2330fB',
+    NullsRankManager: '0xC0476862eBcB69554f53772275c935eD561265E9',
+    NullsWorldCore: '0xA24272fD064A7ebca12f815094E8307A42AcE5b1',
+    NullsPetToken: '0x1D9de135887Fb6f53517Ac76Bd6c1E67121045fb',
+    TransferProxy: '0x3Cc1Ad4766c8b4D8a21B233Bae4Ef55c30139Ebd'
 }
 
 export const ERC20_ADDRESS = {
@@ -55,10 +51,9 @@ export const getERC20ContractAddress = (contract) => {
 
 export const NullsEggManager = contractAbiWithAddress('NullsEggManager')
 export const NullsEggToken = contractAbiWithAddress('NullsEggToken')
-export const RingManager = contractAbiWithAddress('RingManager')
+export const NullsRankManager = contractAbiWithAddress('NullsRankManager')
 export const NullsWorldCore = contractAbiWithAddress('NullsWorldCore')
 export const NullsPetToken = contractAbiWithAddress('NullsPetToken')
-export const NullsWorldMarket = contractAbiWithAddress('NullsWorldMarket')
 
 
 // ERC20
