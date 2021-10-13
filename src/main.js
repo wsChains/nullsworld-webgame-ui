@@ -6,7 +6,7 @@ import { createPinia } from 'pinia'
 import mitt from 'mitt'
 import { axios } from '@/backends/base'
 import { vfmPlugin } from 'vue-final-modal'
-
+import introJs from 'intro.js'
 // Pina Stores
 import { useWallet } from '@/stores/wallet'
 import { useParamStore } from '@/stores/paramStore'
@@ -37,6 +37,8 @@ import NeedWalletConnect from '@/components/Common/NeedWalletConnect.vue'
 // Styles
 import '@/styles/custom-ant-design.less'
 import '@/styles/tailwind.css'
+import '@/styles/common.less'
+import 'intro.js/introjs.css'
 
 // Create objecs
 const emitter = mitt()
@@ -54,6 +56,7 @@ app.use(pinia)
 app.use(router)
 app.use(vfmPlugin)
 app.use(i18n)
+app.use(introJs)
 
 // Use Components
 app.use(Radio)
@@ -78,6 +81,7 @@ app.config.globalProperties.$emitter = emitter
 app.config.globalProperties.$axios = axios
 app.config.globalProperties.$message = message
 app.config.globalProperties.$notification = notification
+app.config.globalProperties.$introJs = introJs
 
 // Global store
 app.config.globalProperties.wallet = useWallet(app)

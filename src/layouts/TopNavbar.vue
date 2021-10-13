@@ -79,7 +79,7 @@
             <div class="ml-4 mt-5 flex items-center">
               <button
                 @click="navigateTo({ name: 'MyEggs' })"
-                :class="[$route.name === 'MyEggs' ? 'current-route' : '', 'nav-button-vertical', 'nav-pop-button']"
+                :class="[$route.name === 'MyEggs' ? 'current-route' : '', 'nav-button-vertical', 'nav-pop-button', 'eggs-btn']"
               >
                 <img class="nav-button-image" src="/eggs-kira.png" />
                 <span class="px-2" ref="MyEggs-route">EGGS</span>
@@ -126,6 +126,16 @@ export default {
   },
   mounted() {
     window.addEventListener('resize', this.updateArrowPosition)
+    this.$introJs().setOptions({
+      steps: [{
+        element: document.querySelector('.eggs-btn'),
+        intro: `<div class='content'><p>Welcome to the world of Nullsworld,</p><p>You can get your first pet by buying eggs and hatching eggs</p>
+        <p class='play-video-wrap'><span class='play-icon'></span><span class='paly-video'>Play video</span></p>
+        </div>`
+      }],
+      showBullets: false,
+      doneLabel: 'Skip boot'
+    }).start()
   },
   data() {
     return {

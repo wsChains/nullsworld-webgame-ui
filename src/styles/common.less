@@ -1,0 +1,81 @@
+.introjs-overlay {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.introjs-helperLayer {
+  // box-shadow: none !important;
+}
+
+.introjs-tooltipReferenceLayer {
+  .introjs-tooltip {
+    left: 50% !important;
+    transform: translateX(-50%);
+    width: 490px;
+    max-width: none;
+    background-color: transparent;
+    box-shadow: none;
+
+    .introjs-tooltip-header {
+      display: none;
+    }
+
+    .introjs-arrow {
+      margin: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 43px;
+      height: 41px;
+      border: none;
+      background: url('../../public/guide-arrow.png') center / contain no-repeat;
+    }
+
+    .introjs-tooltiptext {
+      padding: 59px 52px 0px 50px;
+      min-height: 233px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      color: #8f4800;
+      background: url('../../public/guide-bg.png') center top / 100% no-repeat;
+
+      .play-video-wrap {
+        margin-top: 16px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+
+        .play-icon {
+          margin-right: 10px;
+          width: 25px;
+          height: 25px;
+          background: url('../../public/play.png') center top / cover no-repeat;
+        }
+
+        .paly-video {
+          font-size: 20px;
+          font-weight: 600;
+          color: #fc5a00;
+          cursor: pointer;
+          user-select: none;
+        }
+      }
+    }
+
+    .introjs-tooltipbuttons {
+      display: flex;
+      justify-content: center;
+      border: none;
+
+      .introjs-button {
+        font-size: 16px;
+        font-weight: 500;
+        color: #fff;
+        text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
+        border: none;
+        border-radius: 20px;
+        background: linear-gradient(to right, #ff863b, #ff6e35);
+      }
+    }
+  }
+}
